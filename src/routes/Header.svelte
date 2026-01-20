@@ -13,8 +13,9 @@
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 	import Avatar from '@/components/Avatar.svelte';
 	import { goto } from '$app/navigation';
+	import { toast } from 'svelte-sonner';
 
-	let isAuthenticated = false;
+	let isAuthenticated = true;
 
 	function handleWriteClick() {
 		console.log('clicked');
@@ -88,7 +89,10 @@
 
 					<DropdownMenu.Group class="space-y-1">
 						{#if isAuthenticated}
-							<DropdownMenu.Item class="cursor-pointer">
+							<DropdownMenu.Item
+								class="cursor-pointer"
+								onclick={() => toast.message('Coming soon...')}
+							>
 								<LayoutDashboard /> Dashboard
 							</DropdownMenu.Item>
 
