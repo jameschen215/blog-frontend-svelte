@@ -23,7 +23,7 @@
 	let form = $state<HTMLFormElement>();
 
 	function handleWriteClick() {
-		console.log('clicked');
+		toast.info('Functionality coming soon...');
 	}
 </script>
 

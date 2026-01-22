@@ -1,5 +1,5 @@
 import { flattenError } from 'zod';
-import { fail, isRedirect, redirect } from '@sveltejs/kit';
+import { fail, redirect } from '@sveltejs/kit';
 import { loginSchema } from '@/schema/auth.js';
 import { login } from '@/api/auth.js';
 import { APIError } from '@/api/client.js';
@@ -23,8 +23,6 @@ export const actions = {
 			});
 		}
 
-		// Call login API
-		// Backend handles setting the JWT cookie, it's necessary to set token cookies here
 		try {
 			const loginResult = await login(validateResult.data);
 			const token = btoa(JSON.stringify(loginResult.user));
@@ -32,14 +30,15 @@ export const actions = {
 
 			redirect(307, '/?toast=login-success');
 		} catch (error) {
-			// let redirect pass through
-			if (isRedirect(error)) {
-				throw error;
+			// expected, user-facing error
+			if (error instanceof APIError) {
+				return fail(error.status!, {
+					message: error.message,
+					errors: error.fieldErrors
+				});
 			}
 
-			return fail(401, {
-				formError: { message: error instanceof APIError ? error.message : 'Invalid credentials' }
-			});
+			throw error;
 		}
 	}
 };

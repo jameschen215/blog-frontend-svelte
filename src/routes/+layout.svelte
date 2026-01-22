@@ -2,7 +2,7 @@
 	import './layout.css';
 
 	import { page } from '$app/state';
-	import { onMount } from 'svelte';
+	import { goto } from '$app/navigation';
 	import { toast } from 'svelte-sonner';
 	import { ModeWatcher } from 'mode-watcher';
 	import { Toaster } from '$lib/components/ui/sonner/index.js';
@@ -10,12 +10,18 @@
 	import Header from './Header.svelte';
 
 	let { children, data } = $props();
+	let toastShown = false;
 
-	onMount(() => {
+	$effect(() => {
 		const type = page.url.searchParams.get('toast');
 
-		if (type === 'login-success') {
+		if (type === 'login-success' && !toastShown) {
 			toast.success('You are logged in successfully!');
+
+			toastShown = true;
+
+			// clean URL, avoid duplicate toasts
+			goto(page.url.pathname, { replaceState: true });
 		}
 	});
 </script>
@@ -29,5 +35,5 @@
 		{@render children()}
 	</main>
 
-	<Toaster position="top-right" />
+	<Toaster position="bottom-right" />
 </div>
