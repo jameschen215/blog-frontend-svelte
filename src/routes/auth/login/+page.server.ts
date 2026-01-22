@@ -9,7 +9,7 @@ export async function load({ locals }) {
 }
 
 export const actions = {
-	default: async ({ cookies, request }) => {
+	default: async ({ cookies, request, url }) => {
 		const formData = await request.formData();
 		const data = Object.fromEntries(formData);
 
@@ -28,7 +28,11 @@ export const actions = {
 			const token = btoa(JSON.stringify(loginResult.user));
 			cookies.set('jwt', token, { path: '/' });
 
-			redirect(307, '/?toast=login-success');
+			const to = url.searchParams.has('redirect')
+				? `${url.searchParams.get('redirect')}?toast=login-success`
+				: '/?toast=login-success';
+
+			redirect(307, to);
 		} catch (error) {
 			// expected, user-facing error
 			if (error instanceof APIError) {

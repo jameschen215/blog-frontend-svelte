@@ -16,11 +16,13 @@
 	import { toast } from 'svelte-sonner';
 	import type { AuthResult } from '@/types/data';
 	import { enhance } from '$app/forms';
+	import { page } from '$app/state';
 
 	let { user }: AuthResult = $props();
 	let isAuthenticated = $derived(!!user);
 
 	let form = $state<HTMLFormElement>();
+	let redirect = $derived(page.url.pathname + page.url.hash);
 
 	function handleWriteClick() {
 		toast.info('Functionality coming soon...');
@@ -114,11 +116,17 @@
 								</DropdownMenu.Item>
 							</form>
 						{:else}
-							<DropdownMenu.Item class="cursor-pointer" onclick={() => goto(`/auth/login`)}>
+							<DropdownMenu.Item
+								class="cursor-pointer"
+								onclick={() => goto(`/auth/login?redirect=${encodeURIComponent(redirect)}`)}
+							>
 								<LogIn /> Login
 							</DropdownMenu.Item>
 
-							<DropdownMenu.Item class="cursor-pointer" onclick={() => goto(`/auth/register`)}>
+							<DropdownMenu.Item
+								class="cursor-pointer"
+								onclick={() => goto(`/auth/register?redirect=${encodeURIComponent(redirect)}`)}
+							>
 								<UserPlus /> Register
 							</DropdownMenu.Item>
 						{/if}
