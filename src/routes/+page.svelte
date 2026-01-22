@@ -1,4 +1,5 @@
 <script lang="ts">
+	const { data } = $props();
 </script>
 
 <svelte:head>
@@ -8,4 +9,5 @@
 
 <section>
 	<h1>The blog</h1>
+	<p>Hello {data.user ? data.user.username : 'world'}!</p>
 </section>

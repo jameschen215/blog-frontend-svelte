@@ -8,9 +8,6 @@
 	let { form } = $props();
 
 	let loading = $state(false);
-
-	// let username = $derived(form?.data?.username ?? '');
-	// let password = $derived(form?.data?.password ?? '');
 </script>
 
 <div class="mt-10 flex w-full max-w-md flex-1 sm:mt-20">
@@ -71,9 +68,9 @@
 						{loading ? 'Logging in...' : 'Login'}
 					</Button>
 
-					<!-- {#if !form?.success}
-						<Field.FieldError id="password-error">general error</Field.FieldError>
-					{/if} -->
+					{#if form?.formError}
+						<Field.FieldError id="password-error">{form?.formError.message}</Field.FieldError>
+					{/if}
 				</Field.Field>
 			</Field.Group>
 		</Field.Set>

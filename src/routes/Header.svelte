@@ -14,8 +14,13 @@
 	import Avatar from '@/components/Avatar.svelte';
 	import { goto } from '$app/navigation';
 	import { toast } from 'svelte-sonner';
+	import type { AuthResult } from '@/types/data';
+	import { enhance } from '$app/forms';
 
-	let isAuthenticated = false;
+	let { user }: AuthResult = $props();
+	let isAuthenticated = $derived(!!user);
+
+	let form = $state<HTMLFormElement>();
 
 	function handleWriteClick() {
 		console.log('clicked');
@@ -72,13 +77,20 @@
 			<!-- dropdown menu -->
 			<DropdownMenu.Root>
 				<DropdownMenu.Trigger>
-					<Button variant="ghost" size="icon" class="group cursor-pointer rounded-full px-0!">
-						{#if isAuthenticated}
-							<Avatar username="James" className="group-hover:border-transparent" />
-						{:else}
-							<Menu class="h-[1.2rem] w-[1.2rem]" />
-						{/if}
-					</Button>
+					{#snippet child({ props })}
+						<Button
+							{...props}
+							variant="ghost"
+							size="icon"
+							class="group cursor-pointer rounded-full px-0!"
+						>
+							{#if isAuthenticated}
+								<Avatar username="James" className="group-hover:border-transparent" />
+							{:else}
+								<Menu class="h-[1.2rem] w-[1.2rem]" />
+							{/if}
+						</Button>
+					{/snippet}
 				</DropdownMenu.Trigger>
 
 				<DropdownMenu.Content class="w-40 rounded-sm p-2" align="start">
@@ -96,9 +108,11 @@
 								<LayoutDashboard /> Dashboard
 							</DropdownMenu.Item>
 
-							<DropdownMenu.Item class="cursor-pointer">
-								<Logout /> Logout
-							</DropdownMenu.Item>
+							<form action="/auth/logout" method="post" bind:this={form} use:enhance>
+								<DropdownMenu.Item class="cursor-pointer" onclick={() => form?.submit()}>
+									<Logout /> Logout
+								</DropdownMenu.Item>
+							</form>
 						{:else}
 							<DropdownMenu.Item class="cursor-pointer" onclick={() => goto(`/auth/login`)}>
 								<LogIn /> Login
