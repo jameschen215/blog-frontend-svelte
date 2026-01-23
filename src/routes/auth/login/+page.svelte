@@ -3,10 +3,10 @@
 	import { enhance, applyAction } from '$app/forms';
 	import type { SubmitFunction } from '@sveltejs/kit';
 
-	import { cn } from '@/utils.js';
+	import { cn } from '$lib/utils.js';
 	import * as Field from '$lib/components/ui/field/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
-	import Button from '@/components/ui/button/button.svelte';
+	import Button from '$lib/components/ui/button/button.svelte';
 
 	let { form } = $props();
 	let submitting = $state(false);
@@ -55,6 +55,11 @@
 		};
 	};
 </script>
+
+<svelte:head>
+	<title>Login</title>
+	<meta name="description" content="Login to the blog" />
+</svelte:head>
 
 <div class="mt-10 flex w-full max-w-md flex-1 sm:mt-20">
 	<form class="w-full px-4 sm:px-8" method="post" novalidate use:enhance={handleSubmit}>

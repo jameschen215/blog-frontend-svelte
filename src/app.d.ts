@@ -6,12 +6,12 @@ import type { AuthResultUser } from '@/types/data';
 declare global {
 	namespace App {
 		// interface Error {}
-		interface Locals {
-			user: AuthResultUser;
-		}
 		// interface PageData {}
 		// interface PageState {}
 		// interface Platform {}
+		interface Locals {
+			user: AuthResultUser;
+		}
 	}
 }
 

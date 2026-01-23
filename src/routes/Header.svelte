@@ -1,22 +1,23 @@
 <script lang="ts">
-	import SunIcon from '@lucide/svelte/icons/sun';
-	import MoonIcon from '@lucide/svelte/icons/moon';
-	import PenLine from '@lucide/svelte/icons/pen-line';
-	import Menu from '@lucide/svelte/icons/menu';
-	import LayoutDashboard from '@lucide/svelte/icons/layout-dashboard';
-	import Logout from '@lucide/svelte/icons/log-out';
-	import LogIn from '@lucide/svelte/icons/log-in';
-	import UserPlus from '@lucide/svelte/icons/user-plus';
-
-	import { toggleMode } from 'mode-watcher';
-	import Button from '@/components/ui/button/button.svelte';
-	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
-	import Avatar from '@/components/Avatar.svelte';
-	import { goto } from '$app/navigation';
-	import { toast } from 'svelte-sonner';
-	import type { AuthResult } from '@/types/data';
-	import { enhance } from '$app/forms';
 	import { page } from '$app/state';
+	import { enhance } from '$app/forms';
+	import { toast } from 'svelte-sonner';
+	import { goto } from '$app/navigation';
+	import { toggleMode } from 'mode-watcher';
+
+	import Menu from '@lucide/svelte/icons/menu';
+	import SunIcon from '@lucide/svelte/icons/sun';
+	import LogIn from '@lucide/svelte/icons/log-in';
+	import MoonIcon from '@lucide/svelte/icons/moon';
+	import Logout from '@lucide/svelte/icons/log-out';
+	import PenLine from '@lucide/svelte/icons/pen-line';
+	import UserPlus from '@lucide/svelte/icons/user-plus';
+	import LayoutDashboard from '@lucide/svelte/icons/layout-dashboard';
+
+	import type { AuthResult } from '$lib/types/data';
+	import Avatar from '$lib/components/Avatar.svelte';
+	import Button from '$lib/components/ui/button/button.svelte';
+	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 
 	let { user }: AuthResult = $props();
 	let isAuthenticated = $derived(!!user);

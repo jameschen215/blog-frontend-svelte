@@ -1,9 +1,10 @@
-import { registerSchema } from '@/schema/auth';
-import type { Actions } from './$types';
 import { flattenError } from 'zod';
 import { fail, redirect } from '@sveltejs/kit';
-import { register } from '@/api/auth';
-import { APIError } from '@/api/client';
+
+import type { Actions } from './$types';
+import { register } from '$lib/api/auth';
+import { APIError } from '$lib/api/client';
+import { registerSchema } from '$lib/schema/auth';
 
 export const actions = {
 	default: async ({ cookies, request, url }) => {
@@ -11,8 +12,6 @@ export const actions = {
 		const data = Object.fromEntries(formData);
 
 		const validateResult = registerSchema.safeParse(data);
-
-		console.log('validation');
 
 		if (!validateResult.success) {
 			console.log('validation failed');

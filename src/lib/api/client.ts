@@ -1,4 +1,4 @@
-import { BASE_URL, DEFAULT_TIMEOUT } from '@/constants';
+import { BASE_URL, DEFAULT_TIMEOUT } from '$lib/constants';
 
 // custom api error class
 export class APIError extends Error {

@@ -1,8 +1,9 @@
 import { flattenError } from 'zod';
 import { fail, redirect } from '@sveltejs/kit';
-import { loginSchema } from '@/schema/auth.js';
-import { login } from '@/api/auth.js';
-import { APIError } from '@/api/client.js';
+
+import { loginSchema } from '$lib/schema/auth.js';
+import { APIError } from '$lib/api/client.js';
+import { login } from '$lib/api/auth.js';
 
 export async function load({ locals }) {
 	if (locals.user) redirect(307, '/');

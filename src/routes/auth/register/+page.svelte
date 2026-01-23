@@ -1,13 +1,13 @@
 <script lang="ts">
-	import { applyAction, enhance } from '$app/forms';
+	import { page } from '$app/state';
 	import type { PageProps } from './$types';
+	import { applyAction, enhance } from '$app/forms';
 	import type { SubmitFunction } from '@sveltejs/kit';
 
+	import { cn } from '$lib/utils';
 	import * as Field from '$lib/components/ui/field/index.js';
 	import Input from '$lib/components/ui/input/input.svelte';
-	import Button from '@/components/ui/button/button.svelte';
-	import { page } from '$app/state';
-	import { cn } from '@/utils';
+	import Button from '$lib/components/ui/button/button.svelte';
 
 	let { form }: PageProps = $props();
 
@@ -52,6 +52,11 @@
 		};
 	};
 </script>
+
+<svelte:head>
+	<title>Register</title>
+	<meta name="description" content="Register to the blog" />
+</svelte:head>
 
 <div class="mt-10 flex w-full max-w-md flex-1 sm:mt-20">
 	<form class="w-full px-4 sm:px-8" method="post" novalidate use:enhance={handleSubmit}>
