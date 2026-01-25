@@ -22,7 +22,6 @@
 	let { user }: AuthResult = $props();
 	let isAuthenticated = $derived(!!user);
 
-	let form = $state<HTMLFormElement>();
 	let redirect = $derived(page.url.pathname + page.url.hash);
 
 	function handleWriteClick() {
@@ -111,9 +110,13 @@
 								<LayoutDashboard /> Dashboard
 							</DropdownMenu.Item>
 
-							<form action="/auth/logout" method="post" bind:this={form} use:enhance>
-								<DropdownMenu.Item class="cursor-pointer" onclick={() => form?.submit()}>
-									<Logout /> Logout
+							<form action="/auth/logout" method="post" use:enhance>
+								<DropdownMenu.Item class="w-full cursor-pointer">
+									{#snippet child({ props })}
+										<button {...props} type="submit">
+											<Logout /> Logout
+										</button>
+									{/snippet}
 								</DropdownMenu.Item>
 							</form>
 						{:else}

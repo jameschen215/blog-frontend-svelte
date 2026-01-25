@@ -6,6 +6,8 @@ import { SECRET_KEY } from '$env/static/private';
 const JWT_SECRET = new TextEncoder().encode(SECRET_KEY ?? 'JWT_SECRET');
 
 export const handle: Handle = async ({ event, resolve }) => {
+	console.log(event.url.pathname);
+
 	const token = event.cookies.get('jwt');
 
 	if (token) {
