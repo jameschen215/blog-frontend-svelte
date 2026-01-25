@@ -7,14 +7,13 @@ import { APIError } from '$lib/api/client';
 import { registerSchema } from '$lib/schema/auth';
 
 export const actions = {
-	default: async ({ cookies, request, url }) => {
+	default: async ({ request, url }) => {
 		const formData = await request.formData();
 		const data = Object.fromEntries(formData);
 
 		const validateResult = registerSchema.safeParse(data);
 
 		if (!validateResult.success) {
-			console.log('validation failed');
 			return fail(400, {
 				errors: flattenError(validateResult.error).fieldErrors,
 				data
@@ -22,9 +21,10 @@ export const actions = {
 		}
 
 		try {
-			const registerResult = await register(validateResult.data);
-			const token = btoa(JSON.stringify(registerResult.user));
-			cookies.set('jwt', token, { path: '/' });
+			// const registerResult = await register(validateResult.data);
+			// const token = btoa(JSON.stringify(registerResult.user));
+			// cookies.set('jwt', token, { path: '/' });
+			await register(validateResult.data);
 
 			const to = url.searchParams.has('redirect')
 				? `${url.searchParams.get('redirect')}?toast=login-success`

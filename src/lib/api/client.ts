@@ -21,13 +21,18 @@ export class APIError extends Error {
 	}
 }
 
-async function apiFetch<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+async function apiFetch<T>(
+	endpoint: string,
+	customFetch = fetch,
+	options: RequestInit = {}
+): Promise<T> {
 	const controller = new AbortController();
 	const timeoutId = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT);
 
 	try {
-		const res = await fetch(BASE_URL + endpoint, {
+		const res = await customFetch(BASE_URL + endpoint, {
 			...options,
+			credentials: 'include',
 			signal: controller.signal,
 			headers: {
 				'Content-Type': 'application/json',
@@ -79,32 +84,42 @@ async function apiFetch<T>(endpoint: string, options: RequestInit = {}): Promise
 	}
 }
 
-export function apiGet<T>(endpoint: string, headers: HeadersInit = {}) {
-	return apiFetch<T>(endpoint, {
+export function apiGet<T>(endpoint: string, customFetch = fetch, options?: RequestInit) {
+	return apiFetch<T>(endpoint, customFetch, {
 		method: 'GET',
-		headers
+		...options
 	});
 }
 
-export function apiPost<T>(endpoint: string, data?: unknown, headers: HeadersInit = {}) {
-	return apiFetch<T>(endpoint, {
+export function apiPost<T>(
+	endpoint: string,
+	data?: unknown,
+	customFetch = fetch,
+	options?: RequestInit
+) {
+	return apiFetch<T>(endpoint, customFetch, {
 		method: 'POST',
-		headers,
-		body: data ? JSON.stringify(data) : undefined
+		body: data ? JSON.stringify(data) : undefined,
+		...options
 	});
 }
 
-export function apiPut<T>(endpoint: string, data: unknown, headers: HeadersInit = {}) {
-	return apiFetch<T>(endpoint, {
+export function apiPut<T>(
+	endpoint: string,
+	data: unknown,
+	customFetch = fetch,
+	options?: RequestInit
+) {
+	return apiFetch<T>(endpoint, customFetch, {
 		method: 'PUT',
-		headers,
-		body: JSON.stringify(data)
+		body: JSON.stringify(data),
+		...options
 	});
 }
 
-export function apiDelete<T>(endpoint: string, headers: HeadersInit = {}) {
-	return apiFetch<T>(endpoint, {
+export function apiDelete<T>(endpoint: string, customFetch = fetch, options?: RequestInit) {
+	return apiFetch<T>(endpoint, customFetch, {
 		method: 'DELETE',
-		headers
+		...options
 	});
 }

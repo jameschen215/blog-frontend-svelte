@@ -10,7 +10,7 @@ export async function load({ locals }) {
 }
 
 export const actions = {
-	default: async ({ cookies, request, url }) => {
+	default: async ({ request, fetch, url }) => {
 		const formData = await request.formData();
 		const data = Object.fromEntries(formData);
 
@@ -25,9 +25,7 @@ export const actions = {
 		}
 
 		try {
-			const loginResult = await login(validateResult.data);
-			const token = btoa(JSON.stringify(loginResult.user));
-			cookies.set('jwt', token, { path: '/' });
+			await login(validateResult.data, fetch);
 
 			const to = url.searchParams.has('redirect')
 				? `${url.searchParams.get('redirect')}?toast=login-success`

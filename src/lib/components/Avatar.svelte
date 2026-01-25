@@ -10,5 +10,8 @@
 		className
 	)}
 >
-	{username[0].toUpperCase()}
+	<span>
+		{username[0].toUpperCase()}
+	</span>
+	<span class="sr-only">User avatar - {username[0]}</span>
 </div>

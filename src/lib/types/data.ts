@@ -71,7 +71,7 @@ export interface CommentCreateInput {
 	content: string;
 }
 
-interface AuthResultUser {
+export interface AuthResultUser {
 	id: number;
 	username: string;
 	email: string;
