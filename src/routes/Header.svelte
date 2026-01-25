@@ -14,12 +14,16 @@
 	import UserPlus from '@lucide/svelte/icons/user-plus';
 	import LayoutDashboard from '@lucide/svelte/icons/layout-dashboard';
 
-	import type { AuthResult } from '$lib/types/data';
+	import type { AuthResultUser } from '$lib/types/data';
 	import Avatar from '$lib/components/Avatar.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 
-	let { user }: AuthResult = $props();
+	interface Props {
+		user: AuthResultUser | null;
+	}
+
+	let { user }: Props = $props();
 	let isAuthenticated = $derived(!!user);
 
 	let redirect = $derived(page.url.pathname + page.url.hash);

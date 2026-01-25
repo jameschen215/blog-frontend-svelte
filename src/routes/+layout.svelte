@@ -13,6 +13,8 @@
 	let toastShown = false;
 
 	$effect(() => {
+		console.log({ toastShown });
+
 		const type = page.url.searchParams.get('toast');
 
 		if (type === 'login-success' && !toastShown) {
@@ -22,6 +24,13 @@
 
 			// clean URL, avoid duplicate toasts
 			goto(page.url.pathname, { replaceState: true });
+			toastShown = false;
+		} else if (type === 'logout-success' && !toastShown) {
+			toast.message('You are logged out.');
+			toastShown = true;
+
+			goto(page.url.pathname, { replaceState: true });
+			toastShown = false;
 		}
 	});
 </script>

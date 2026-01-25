@@ -3,9 +3,13 @@ import type { Actions } from './$types';
 import { redirect } from '@sveltejs/kit';
 
 export const actions = {
-	default: async ({ fetch }) => {
+	default: async ({ url, fetch }) => {
 		await logout(fetch);
 
-		redirect(303, '/');
+		const to = url.searchParams.has('redirect')
+			? `${url.searchParams.get('redirect')}?toast=logout-success`
+			: '/?toast=logout-success';
+
+		redirect(303, to);
 	}
 } satisfies Actions;
