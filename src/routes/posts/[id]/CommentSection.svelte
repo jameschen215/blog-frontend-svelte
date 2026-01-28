@@ -6,7 +6,7 @@
 	import { format } from 'date-fns';
 
 	interface Props {
-		user: AuthResultUser;
+		user: AuthResultUser | null;
 		post: PostDetail;
 	}
 
@@ -35,8 +35,8 @@
 	<form action="" class="my-5 flex flex-col gap-5">
 		{#if isAuthenticated}
 			<div class="flex items-center gap-2">
-				<Avatar username={user.username} className="size-9" />
-				<span class="font-semibold">{user.username}</span>
+				<Avatar username={user!.username} className="size-9" />
+				<span class="font-semibold">{user!.username}</span>
 			</div>
 		{/if}
 

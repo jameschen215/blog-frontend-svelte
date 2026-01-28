@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { PageProps } from './$types';
+	import type { ActionData, PageData, PageProps } from './$types';
 	import Article from './Article.svelte';
 	import ArticleControls from './ArticleControls.svelte';
 	import CommentSection from './CommentSection.svelte';

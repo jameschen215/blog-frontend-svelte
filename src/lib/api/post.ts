@@ -32,5 +32,5 @@ export async function getPost(id: number, customFetch = fetch): Promise<PostDeta
 }
 
 export async function likePost(id: number, customFetch = fetch) {
-	return apiPost(`/api/posts/${id}/like`, customFetch);
+	return apiPost(`/api/posts/${id}/like`, undefined, customFetch);
 }
