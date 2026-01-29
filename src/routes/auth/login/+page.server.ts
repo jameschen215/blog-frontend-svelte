@@ -27,9 +27,7 @@ export const actions = {
 		try {
 			await login(validateResult.data, fetch);
 
-			const to = url.searchParams.has('redirect')
-				? `${url.searchParams.get('redirect')}?toast=login-success`
-				: '/?toast=login-success';
+			const to = url.searchParams.has('redirect') ? `${url.searchParams.get('redirect')}` : '/';
 
 			redirect(307, to);
 		} catch (error) {

@@ -7,6 +7,8 @@
 	import * as Field from '$lib/components/ui/field/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import Button from '$lib/components/ui/button/button.svelte';
+	import { goto } from '$app/navigation';
+	import { toast } from 'svelte-sonner';
 
 	let { form } = $props();
 	let submitting = $state(false);
@@ -37,19 +39,25 @@
 		return async ({ result }) => {
 			submitting = false;
 
-			await applyAction(result);
+			if (result.type === 'redirect') {
+				toast.message('You are logged in successfully!');
+				goto(result.location, { invalidateAll: true });
+			} else {
+				await applyAction(result);
 
-			// Focus first error field after submission
-			if (result.type === 'failure' && result.data) {
-				const data = result.data as Record<string, any>;
-				if (data.errors && typeof data.errors === 'object') {
-					setTimeout(() => {
-						const firstErrorField = Object.keys(data.errors)[0];
-						if (firstErrorField) {
-							const input = document.getElementById(firstErrorField) as HTMLInputElement;
-							input?.focus();
-						}
-					}, 0);
+				// Focus first error field after submission
+				if (result.type === 'failure' && result.data) {
+					const data = result.data as Record<string, any>;
+
+					if (data.errors && typeof data.errors === 'object') {
+						setTimeout(() => {
+							const firstErrorField = Object.keys(data.errors)[0];
+							if (firstErrorField) {
+								const input = document.getElementById(firstErrorField) as HTMLInputElement;
+								input?.focus();
+							}
+						}, 0);
+					}
 				}
 			}
 		};

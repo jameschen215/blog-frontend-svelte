@@ -4,8 +4,11 @@
 	import type { AuthResultUser, PostDetail } from '$lib/types/data';
 	import { enhance } from '$app/forms';
 	import { scale } from 'svelte/transition';
-	import type { ActionData, PageProps } from './$types';
 	import { toast } from 'svelte-sonner';
+	import type { SubmitFunction } from '@sveltejs/kit';
+	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
+	import { onMount } from 'svelte';
 
 	interface Props {
 		user: AuthResultUser | null;
@@ -18,62 +21,72 @@
 	let isAuthenticated = $derived(!!user);
 	let pendingRequests = $state(0);
 
-	let liked = $derived(post.isLikedByCurrentUser);
+	let optimisticLiked = $derived(post.isLikedByCurrentUser);
 	let optimisticLikes = $derived(post._count?.likes ?? 0);
 
-	// Sync with server state only when no pending requests
-	$effect(() => {
-		if (pendingRequests === 0) {
-			liked = post.isLikedByCurrentUser;
-			optimisticLikes = post._count?.likes ?? 0;
+	let likeButton: HTMLButtonElement;
+
+	onMount(() => {
+		const hash = page.url.hash;
+
+		if (hash) {
+			setTimeout(() => {
+				likeButton?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+				likeButton?.blur();
+			}, 10);
 		}
 	});
 
-	$inspect({ pendingRequests });
-</script>
+	const handleLikeSubmit: SubmitFunction = ({ cancel }) => {
+		if (!isAuthenticated) {
+			goto(`/auth/login?redirect=${encodeURIComponent(`/posts/${post.id}#like-btn`)}`);
 
-<div class="my-10 flex items-center justify-end gap-5 text-zinc-500">
-	<!-- like button -->
-	<form
-		method="post"
-		action="?/like"
-		use:enhance={() => {
+			cancel();
+		} else {
 			pendingRequests += 1;
 
 			// Save original state in case we need to revert
-			const originalLiked = liked;
+			const originalLiked = optimisticLiked;
 			const originalCount = optimisticLikes;
 
 			// optimistic update
-			if (liked) {
+			if (optimisticLiked) {
 				optimisticLikes -= 1;
 			} else {
 				optimisticLikes += 1;
 			}
 
-			liked = !liked;
+			optimisticLiked = !optimisticLiked;
 
 			return async ({ result, update }) => {
+				pendingRequests -= 1;
 				if (result.type === 'failure') {
 					// Revert optimistic update
-					liked = originalLiked;
+					optimisticLiked = originalLiked;
 					optimisticLikes = originalCount;
 
 					// show error toast
 					toast.error((result.data?.message as string) ?? 'Too many requests');
-				} else if (result.type === 'success') {
+				} else if (result.type === 'success' && pendingRequests === 0) {
+					// apply the last request result instead of validate all the responses
 					await update();
 				}
-
-				pendingRequests -= 1;
-
-				// When pendingRequests hits 0, $effect syncs with server state
 			};
-		}}
-	>
-		<button id="like-btn" type="submit" class="flex cursor-pointer items-center gap-1 p-0">
-			{#key liked}
-				<Heart size={16} fill={liked ? 'currentColor' : 'none'} class="transition-all" />
+		}
+	};
+</script>
+
+<div class="my-10 flex items-center justify-end gap-5 text-zinc-500">
+	<!-- like button -->
+	<form method="post" action="?/like" use:enhance={handleLikeSubmit}>
+		<button
+			id="like-btn"
+			type="submit"
+			class="flex cursor-pointer scroll-mt-16 items-center gap-1 p-0"
+			bind:this={likeButton}
+		>
+			{#key optimisticLiked}
+				<Heart size={16} fill={optimisticLiked ? 'currentColor' : 'none'} class="transition-all" />
 			{/key}
 			<span class="text-sm">{formatCompactNum(optimisticLikes)}</span>
 		</button>

@@ -26,9 +26,7 @@ export const actions = {
 			// cookies.set('jwt', token, { path: '/' });
 			await register(validateResult.data);
 
-			const to = url.searchParams.has('redirect')
-				? `${url.searchParams.get('redirect')}?toast=login-success`
-				: '/?toast=login-success';
+			const to = url.searchParams.has('redirect') ? `${url.searchParams.get('redirect')}` : '/';
 
 			redirect(307, to);
 		} catch (error) {

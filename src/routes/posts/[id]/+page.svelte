@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { page } from '$app/state';
+	import { onMount } from 'svelte';
 	import type { ActionData, PageData, PageProps } from './$types';
 	import Article from './Article.svelte';
 	import ArticleControls from './ArticleControls.svelte';

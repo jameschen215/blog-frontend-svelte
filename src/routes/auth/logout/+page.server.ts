@@ -6,9 +6,7 @@ export const actions = {
 	default: async ({ url, fetch }) => {
 		await logout(fetch);
 
-		const to = url.searchParams.has('redirect')
-			? `${url.searchParams.get('redirect')}?toast=logout-success`
-			: '/?toast=logout-success';
+		const to = url.searchParams.has('redirect') ? `${url.searchParams.get('redirect')}` : '/';
 
 		redirect(303, to);
 	}
