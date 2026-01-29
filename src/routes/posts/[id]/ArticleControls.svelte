@@ -9,6 +9,7 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { onMount } from 'svelte';
+	import { cubicOut } from 'svelte/easing';
 
 	interface Props {
 		user: AuthResultUser | null;
@@ -24,15 +25,15 @@
 	let optimisticLiked = $derived(post.isLikedByCurrentUser);
 	let optimisticLikes = $derived(post._count?.likes ?? 0);
 
-	let likeButton: HTMLButtonElement;
+	let form: HTMLFormElement;
 
 	onMount(() => {
 		const hash = page.url.hash;
 
 		if (hash) {
 			setTimeout(() => {
-				likeButton?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-				likeButton?.blur();
+				form?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+				form?.blur();
 			}, 10);
 		}
 	});
@@ -78,18 +79,18 @@
 
 <div class="my-10 flex items-center justify-end gap-5 text-zinc-500">
 	<!-- like button -->
-	<form method="post" action="?/like" use:enhance={handleLikeSubmit}>
-		<button
-			id="like-btn"
-			type="submit"
-			class="flex cursor-pointer scroll-mt-16 items-center gap-1 p-0"
-			bind:this={likeButton}
-		>
-			{#key optimisticLiked}
-				<Heart size={16} fill={optimisticLiked ? 'currentColor' : 'none'} class="transition-all" />
-			{/key}
-			<span class="text-sm">{formatCompactNum(optimisticLikes)}</span>
-		</button>
+	<form method="post" action="?/like" use:enhance={handleLikeSubmit} bind:this={form}>
+		{#key optimisticLiked}
+			<button
+				id="like-btn"
+				type="submit"
+				class="flex cursor-pointer scroll-mt-16 items-center gap-1 p-0"
+				in:scale={{ start: 0.9, duration: 200, easing: cubicOut }}
+			>
+				<Heart size={16} fill={optimisticLiked ? 'currentColor' : 'none'} />
+				<span class="text-sm">{formatCompactNum(optimisticLikes)}</span>
+			</button>
+		{/key}
 	</form>
 
 	<!-- comment button -->
