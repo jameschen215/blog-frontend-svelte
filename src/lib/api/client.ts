@@ -1,6 +1,9 @@
-import { BASE_URL, DEFAULT_TIMEOUT } from '$lib/constants';
-
 // custom api error class
+import { CONSTANTS } from '$lib/constants';
+
+const TIMEOUT = CONSTANTS.API.TIMEOUT;
+const BASE_URL = CONSTANTS.API.BASE_URL;
+
 export class APIError extends Error {
 	status?: number;
 	response?: Response;
@@ -27,7 +30,7 @@ async function apiFetch<T>(
 	options: RequestInit = {}
 ): Promise<T> {
 	const controller = new AbortController();
-	const timeoutId = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT);
+	const timeoutId = setTimeout(() => controller.abort(), TIMEOUT);
 
 	try {
 		const res = await customFetch(BASE_URL + endpoint, {

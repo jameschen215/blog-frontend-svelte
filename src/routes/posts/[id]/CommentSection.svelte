@@ -6,8 +6,9 @@
 	import * as InputGroup from '$lib/components/ui/input-group/index.js';
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
+	import { CONSTANTS } from '$lib/constants';
 
-	const MAX_COMMENT = 500;
+	const { MAX_LENGTH } = CONSTANTS.COMMENT;
 
 	interface Props {
 		user: AuthResultUser | null;
@@ -18,7 +19,7 @@
 
 	let isAuthenticated = $derived(!!user);
 	let content = $state('');
-	const contentRemaining = $derived.by(() => Math.max(0, MAX_COMMENT - content.length));
+	const contentRemaining = $derived.by(() => Math.max(0, MAX_LENGTH - content.length));
 
 	let textarea = $state<HTMLTextAreaElement | null>(null);
 	let submitting = $state(false);
@@ -71,7 +72,7 @@
 				id="content"
 				name="content"
 				placeholder="What are your thoughts?'"
-				maxlength={MAX_COMMENT}
+				maxlength={MAX_LENGTH}
 				minlength={1}
 				class="min-h-20"
 				bind:ref={textarea}
