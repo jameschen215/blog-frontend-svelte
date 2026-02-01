@@ -4,6 +4,8 @@
 	import { cn, formatCompactNum } from '$lib/utils';
 	import Avatar from '@/components/Avatar.svelte';
 	import * as InputGroup from '$lib/components/ui/input-group/index.js';
+	import { enhance } from '$app/forms';
+	import { goto } from '$app/navigation';
 
 	const MAX_COMMENT = 500;
 
@@ -19,6 +21,7 @@
 	const contentRemaining = $derived.by(() => Math.max(0, MAX_COMMENT - content.length));
 
 	let textarea = $state<HTMLTextAreaElement | null>(null);
+	let submitting = $state(false);
 
 	export function focus() {
 		textarea?.focus();
@@ -36,7 +39,26 @@
 	</h2>
 
 	<!-- form -->
-	<form action="?/comment" method="post" class="my-5 flex flex-col gap-5">
+	<form
+		action="?/comment"
+		method="post"
+		class="my-5 flex flex-col gap-5"
+		use:enhance={({ cancel }) => {
+			submitting = true;
+
+			if (!isAuthenticated) {
+				goto(`/auth/login?redirect=${encodeURIComponent(`/posts/${post.id}#content`)}`);
+
+				cancel();
+			} else {
+				return async ({ update }) => {
+					submitting = false;
+
+					await update();
+				};
+			}
+		}}
+	>
 		{#if isAuthenticated}
 			<div class="flex items-center gap-2">
 				<Avatar username={user!.username} className="size-9" />
@@ -70,7 +92,7 @@
 					size="sm"
 					variant="default"
 					type="submit"
-					disabled={!content.trim()}
+					disabled={!content.trim() || submitting}
 				>
 					Submit
 				</InputGroup.Button>
