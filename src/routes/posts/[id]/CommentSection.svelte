@@ -49,11 +49,17 @@
 
 			if (!isAuthenticated) {
 				goto(`/auth/login?redirect=${encodeURIComponent(`/posts/${post.id}#content`)}`);
-
 				cancel();
 			} else {
-				return async ({ update }) => {
+				return async ({ update, result }) => {
 					submitting = false;
+
+					if (result.type === 'success') {
+						// since you bind:value={content}, the variable is yours,
+						// so you must take care of your variable reset
+						content = '';
+						textarea?.blur();
+					}
 
 					await update();
 				};
