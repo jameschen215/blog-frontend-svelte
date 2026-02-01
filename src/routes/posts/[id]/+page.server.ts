@@ -1,18 +1,22 @@
-import { error, fail } from '@sveltejs/kit';
-import { commentPost, getPost, likePost } from '$lib/api/post.js';
-import type { Actions } from './$types';
-import { APIError } from '$lib/api/client.js';
-import { createCommentSchema } from '$lib/schema/comment.js';
 import { flattenError } from 'zod';
+import type { Actions } from './$types';
+import { error, fail } from '@sveltejs/kit';
+import { createCommentSchema } from '$lib/schema/comment.js';
+import { commentPost, getPost, likePost } from '$lib/api/post.js';
+import { handleLoadError, handleActionError } from '$lib/utils/error-handler.js';
 
 export async function load({ params, fetch }) {
-	const id = Number(params.id);
+	const id = parseInt(params.id);
 
-	if (!Number.isInteger(id) || id < 1) {
+	if (isNaN(id) || id < 1) {
 		error(400, 'Invalid post ID');
 	}
 
-	return await getPost(id, fetch);
+	try {
+		return await getPost(id, fetch);
+	} catch (err) {
+		handleLoadError(err);
+	}
 }
 
 export const actions = {
@@ -26,17 +30,7 @@ export const actions = {
 		try {
 			await likePost(id, fetch);
 		} catch (err) {
-			if (err instanceof APIError) {
-				if (err.status === 429) {
-					return fail(err.status, {
-						message: err.message
-					});
-				} else {
-					error(err.status!, err.message);
-				}
-			}
-
-			throw err;
+			return handleActionError(err);
 		}
 	},
 	comment: async ({ params, request, fetch }) => {
@@ -63,15 +57,8 @@ export const actions = {
 			await commentPost(id, validateResult.data.content, fetch);
 
 			return { success: true };
-		} catch (error) {
-			if (error instanceof APIError) {
-				return fail(error.status!, {
-					message: error.message,
-					errors: error.fieldErrors
-				});
-			}
-
-			throw error;
+		} catch (err) {
+			return handleActionError(err);
 		}
 	}
 } satisfies Actions;
