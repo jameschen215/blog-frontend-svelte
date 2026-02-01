@@ -36,5 +36,8 @@ export const actions = {
 
 			throw err;
 		}
+	},
+	comment: async () => {
+		console.log('commenting...');
 	}
 } satisfies Actions;

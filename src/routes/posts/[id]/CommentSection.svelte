@@ -1,9 +1,11 @@
 <script lang="ts">
+	import { format } from 'date-fns';
 	import type { AuthResultUser, PostDetail } from '$lib/types/data';
-	import { formatCompactNum } from '$lib/utils';
+	import { cn, formatCompactNum } from '$lib/utils';
 	import Avatar from '@/components/Avatar.svelte';
 	import * as InputGroup from '$lib/components/ui/input-group/index.js';
-	import { format } from 'date-fns';
+
+	const MAX_COMMENT = 500;
 
 	interface Props {
 		user: AuthResultUser | null;
@@ -13,6 +15,8 @@
 	let { post, user }: Props = $props();
 
 	let isAuthenticated = $derived(!!user);
+	let content = $state('');
+	const contentRemaining = $derived.by(() => Math.max(0, MAX_COMMENT - content.length));
 
 	let textarea = $state<HTMLTextAreaElement | null>(null);
 
@@ -32,7 +36,7 @@
 	</h2>
 
 	<!-- form -->
-	<form action="" class="my-5 flex flex-col gap-5">
+	<form action="?/comment" method="post" class="my-5 flex flex-col gap-5">
 		{#if isAuthenticated}
 			<div class="flex items-center gap-2">
 				<Avatar username={user!.username} className="size-9" />
@@ -45,14 +49,31 @@
 				id="content"
 				name="content"
 				placeholder="What are your thoughts?'"
-				maxlength={500}
+				maxlength={MAX_COMMENT}
 				minlength={1}
 				class="min-h-20"
 				bind:ref={textarea}
+				bind:value={content}
 			/>
 			<InputGroup.Addon align="block-end">
-				<InputGroup.Text></InputGroup.Text>
-				<InputGroup.Button class="ml-auto cursor-pointer">Submit</InputGroup.Button>
+				<InputGroup.Text
+					class={cn(
+						'text-xs text-muted-foreground',
+						contentRemaining === 0 && 'text-red-500 dark:text-red-400'
+					)}
+				>
+					{contentRemaining}
+					{contentRemaining === 1 ? 'character' : 'characters'} left
+				</InputGroup.Text>
+				<InputGroup.Button
+					class="ml-auto cursor-pointer"
+					size="sm"
+					variant="default"
+					type="submit"
+					disabled={!content.trim()}
+				>
+					Submit
+				</InputGroup.Button>
 			</InputGroup.Addon>
 		</InputGroup.Root>
 	</form>
