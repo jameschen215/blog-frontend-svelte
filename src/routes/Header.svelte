@@ -34,9 +34,9 @@
 </script>
 
 <header
-	class="sticky top-0 z-20 w-full border-b border-zinc-100 bg-background/50 backdrop-blur dark:border-zinc-900"
+	class="sticky top-0 z-20 h-16 w-full border-b border-zinc-100 bg-background/50 backdrop-blur dark:border-zinc-900"
 >
-	<div class="mx-auto flex h-16 w-full max-w-2xl items-center justify-between px-4">
+	<div class="mx-auto flex h-full w-full max-w-2xl items-center justify-between px-4">
 		<!-- brand -->
 		<Button variant="link" class="p-0 hover:no-underline">
 			<a href="/" aria-label="The blog homepage">

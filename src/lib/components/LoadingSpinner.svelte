@@ -7,7 +7,7 @@
 
 {#if navigating.to}
 	<div
-		class="fixed inset-0 z-50 flex flex-col items-center justify-center gap-2 bg-background/80 backdrop-blur-sm"
+		class="fixed inset-x-0 top-16 bottom-0 z-40 flex flex-col items-center justify-center gap-2 bg-background/80 backdrop-blur-sm"
 		transition:fade={{ duration: 150 }}
 	>
 		<LoaderCircle strokeWidth={1.25} class="h-8 w-8 animate-spin text-primary" />
