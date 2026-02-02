@@ -9,6 +9,7 @@
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { goto } from '$app/navigation';
 	import { toast } from 'svelte-sonner';
+	import AuthFormField from '$lib/components/AuthFormField.svelte';
 
 	let { form } = $props();
 	let submitting = $state(false);
@@ -20,17 +21,26 @@
 
 	// Local error state for real-time clearing
 	let localErrors = $state<Record<string, string[] | undefined>>({});
+	let localFormError = $state<string | undefined>();
 
 	// Sync form errors with local errors
 	$effect(() => {
 		if (form?.errors) {
 			localErrors = { ...form.errors };
 		}
+
+		if (form?.message) {
+			localFormError = form.message;
+		}
 	});
 
 	// Clear error for a specific field
 	function clearError(fieldName: string) {
-		localErrors[fieldName] = undefined;
+		// Only clear if there's actually an error
+		if (localErrors[fieldName] || localFormError) {
+			localErrors[fieldName] = undefined;
+			localFormError = undefined;
+		}
 	}
 
 	const handleSubmit: SubmitFunction = () => {
@@ -77,7 +87,7 @@
 
 		<Field.Set>
 			<Field.Group class="gap-5">
-				<Field.Field class="gap-2">
+				<!-- <Field.Field class="gap-2">
 					<Field.FieldLabel for="username">Username</Field.FieldLabel>
 
 					<Input
@@ -93,32 +103,32 @@
 					{#if localErrors?.username}
 						<Field.FieldError id="username-error">{localErrors.username[0]}</Field.FieldError>
 					{/if}
-				</Field.Field>
+				</Field.Field> -->
+				<AuthFormField
+					name="username"
+					label="username"
+					value={form?.data?.username ?? ''}
+					errors={localErrors?.username}
+					onClearError={() => clearError('username')}
+					autofocus
+				/>
 
-				<Field.Field class="gap-2">
-					<Field.FieldLabel for="password">Password</Field.FieldLabel>
-
-					<Input
-						type="password"
-						name="password"
-						id="password"
-						value={form?.data?.password ?? ''}
-						class="rounded-sm"
-						oninput={() => clearError('password')}
-					/>
-
-					{#if localErrors?.password}
-						<Field.FieldError id="password-error">{localErrors.password[0]}</Field.FieldError>
-					{/if}
-				</Field.Field>
+				<AuthFormField
+					name="password"
+					label="password"
+					type="password"
+					value={form?.data?.password ?? ''}
+					errors={localErrors?.password}
+					onClearError={() => clearError('password')}
+				/>
 
 				<Field.Field class="gap-2">
 					<Button type="submit" class="cursor-pointer" disabled={submitting}>
 						{submitting ? 'Logging in...' : 'Login'}
 					</Button>
 
-					{#if form?.message}
-						<Field.FieldError id="form-message">{form.message}</Field.FieldError>
+					{#if localFormError}
+						<Field.FieldError id="form-message">{localFormError}</Field.FieldError>
 					{/if}
 				</Field.Field>
 			</Field.Group>

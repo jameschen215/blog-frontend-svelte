@@ -7,7 +7,7 @@ import { APIError } from '$lib/api/client';
 import { registerSchema } from '$lib/schema/auth';
 
 export const actions = {
-	default: async ({ request, url }) => {
+	default: async ({ request, url, fetch }) => {
 		const formData = await request.formData();
 		const data = Object.fromEntries(formData);
 
@@ -21,10 +21,7 @@ export const actions = {
 		}
 
 		try {
-			// const registerResult = await register(validateResult.data);
-			// const token = btoa(JSON.stringify(registerResult.user));
-			// cookies.set('jwt', token, { path: '/' });
-			await register(validateResult.data);
+			await register(validateResult.data, fetch);
 
 			const to = url.searchParams.has('redirect') ? `${url.searchParams.get('redirect')}` : '/';
 

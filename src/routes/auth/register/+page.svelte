@@ -8,11 +8,13 @@
 	import * as Field from '$lib/components/ui/field/index.js';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
+	import AuthFormField from '$lib/components/AuthFormField.svelte';
 
 	let { form }: PageProps = $props();
 
 	let submitting = $state(false);
 	let localErrors = $state<Record<string, string[] | undefined>>({});
+	let localFormError = $state<string | undefined>();
 	let loginUrl = $derived.by(() => {
 		const redirect = page.url.searchParams.get('redirect');
 		return redirect ? `/auth/login?redirect=${encodeURIComponent(redirect)}` : '/auth/login';
@@ -22,10 +24,17 @@
 		if (form?.errors) {
 			localErrors = { ...form.errors };
 		}
+
+		if (form?.message) {
+			localFormError = form.message;
+		}
 	});
 
 	const clearError = (filedName: string) => {
-		localErrors[filedName] = undefined;
+		if (localErrors[filedName] || localFormError) {
+			localErrors[filedName] = undefined;
+			localFormError = undefined;
+		}
 	};
 
 	const handleSubmit: SubmitFunction = () => {
@@ -66,82 +75,49 @@
 
 		<Field.Set>
 			<Field.Group class="gap-5">
-				<Field.Field class="gap-2">
-					<Field.FieldLabel for="username" class="capitalize">username</Field.FieldLabel>
-					<Input
-						type="text"
-						id="username"
-						name="username"
-						value={form?.data?.username ?? ''}
-						oninput={() => clearError('username')}
-						autofocus
-						class="rounded-sm"
-					/>
+				<AuthFormField
+					name="username"
+					label="username"
+					value={form?.data?.username ?? ''}
+					errors={localErrors?.username}
+					onClearError={() => clearError('username')}
+					autofocus
+				/>
 
-					{#if localErrors.username}
-						<Field.FieldError id="username-error">{localErrors.username[0]}</Field.FieldError>
-					{/if}
-				</Field.Field>
+				<AuthFormField
+					name="email"
+					label="email"
+					type="email"
+					value={form?.data?.email ?? ''}
+					errors={localErrors?.email}
+					onClearError={() => clearError('email')}
+				/>
 
-				<Field.Field class="gap-2">
-					<Field.FieldLabel for="email" class="capitalize">email</Field.FieldLabel>
-					<Input
-						type="email"
-						id="email"
-						name="email"
-						value={form?.data?.email ?? ''}
-						oninput={() => clearError('email')}
-						class="rounded-sm"
-					/>
+				<AuthFormField
+					name="password"
+					label="password"
+					type="password"
+					value={form?.data?.password ?? ''}
+					errors={localErrors?.password}
+					onClearError={() => clearError('password')}
+				/>
 
-					{#if localErrors.email}
-						<Field.FieldError id="email-error">{localErrors.email[0]}</Field.FieldError>
-					{/if}
-				</Field.Field>
-
-				<Field.Field class="gap-2">
-					<Field.FieldLabel for="password" class="capitalize">password</Field.FieldLabel>
-					<Input
-						type="password"
-						id="password"
-						name="password"
-						value={form?.data?.password ?? ''}
-						oninput={() => clearError('password')}
-						class="rounded-sm"
-					/>
-
-					{#if localErrors.password}
-						<Field.FieldError id="password-error">{localErrors.password[0]}</Field.FieldError>
-					{/if}
-				</Field.Field>
-
-				<Field.Field class="gap-2">
-					<Field.FieldLabel for="confirmPassword" class="capitalize">
-						Confirm Password
-					</Field.FieldLabel>
-					<Input
-						type="password"
-						id="confirmPassword"
-						name="confirmPassword"
-						value={form?.data?.confirmPassword ?? ''}
-						oninput={() => clearError('confirmPassword')}
-						class="rounded-sm"
-					/>
-
-					{#if localErrors.confirmPassword}
-						<Field.FieldError id="confirmPassword-error">
-							{localErrors.confirmPassword[0]}
-						</Field.FieldError>
-					{/if}
-				</Field.Field>
+				<AuthFormField
+					name="confirmPassword"
+					label="confirmPassword"
+					type="password"
+					value={form?.data?.confirmPassword ?? ''}
+					errors={localErrors?.confirmPassword}
+					onClearError={() => clearError('confirmPassword')}
+				/>
 
 				<Field.Field class="gap-2">
 					<Button type="submit" class="cursor-pointer" disabled={submitting}>
 						{submitting ? 'Registering...' : 'Register'}
 					</Button>
 
-					{#if form?.message}
-						<Field.FieldError id="form-message">{form.message}</Field.FieldError>
+					{#if localFormError}
+						<Field.FieldError id="form-message">{localFormError}</Field.FieldError>
 					{/if}
 				</Field.Field>
 			</Field.Group>
