@@ -5,11 +5,14 @@
 	import { Toaster } from '$lib/components/ui/sonner/index.js';
 
 	import Header from './Header.svelte';
+	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
 
 	let { children, data } = $props();
 </script>
 
 <ModeWatcher />
+
+<LoadingSpinner />
 
 <div class="flex min-h-screen flex-col items-center">
 	<Header user={data.user} />
