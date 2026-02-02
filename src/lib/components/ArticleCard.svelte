@@ -4,7 +4,7 @@
 
 	import * as Card from '$lib/components/ui/card/index.js';
 	import type { PostWithAuthor } from '$lib/types/data';
-	import { formatCompactNum } from '$lib/utils';
+	import { formatCompactNum } from '$lib/utils/format';
 	import { goto } from '$app/navigation';
 
 	let { post, isHome }: { post: PostWithAuthor; isHome: boolean } = $props();

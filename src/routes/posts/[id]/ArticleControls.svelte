@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Heart, MessageCircle } from '@lucide/svelte';
-	import { formatCompactNum } from '@/utils';
+	import { formatCompactNum } from '$lib/utils/format';
 	import type { AuthResultUser, PostDetail } from '$lib/types/data';
 	import { enhance } from '$app/forms';
 	import { scale } from 'svelte/transition';

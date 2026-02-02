@@ -5,16 +5,16 @@ export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs));
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type WithoutChild<T> = T extends { child?: any } ? Omit<T, 'child'> : T;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type WithoutChildren<T> = T extends { children?: any } ? Omit<T, 'children'> : T;
-export type WithoutChildrenOrChild<T> = WithoutChildren<WithoutChild<T>>;
-export type WithElementRef<T, U extends HTMLElement = HTMLElement> = T & { ref?: U | null };
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
-export function formatCompactNum(num: number) {
-	return new Intl.NumberFormat('en', {
-		notation: 'compact',
-		compactDisplay: 'short' // 'short' for 'K', 'long' for 'thousand'
-	}).format(num);
-}
+/**
+ * Type utilities for Svelte component props
+ */
+
+export type WithoutChild<T> = T extends { child?: any } ? Omit<T, 'child'> : T;
+
+export type WithoutChildren<T> = T extends { children?: any } ? Omit<T, 'children'> : T;
+
+export type WithoutChildrenOrChild<T> = WithoutChildren<WithoutChild<T>>;
+
+export type WithElementRef<T, U extends HTMLElement = HTMLElement> = T & { ref?: U | null };

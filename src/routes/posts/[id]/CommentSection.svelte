@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { format } from 'date-fns';
 	import type { AuthResultUser, PostDetail } from '$lib/types/data';
-	import { cn, formatCompactNum } from '$lib/utils';
+	import { formatCompactNum } from '$lib/utils/format';
+	import { cn } from '$lib/utils';
 	import Avatar from '@/components/Avatar.svelte';
 	import * as InputGroup from '$lib/components/ui/input-group/index.js';
 	import { enhance } from '$app/forms';
