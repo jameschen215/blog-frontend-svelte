@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { format } from 'date-fns';
+	import { slide } from 'svelte/transition';
 	import type { AuthResultUser, PostDetail } from '$lib/types/data';
 	import { formatCompactNum } from '$lib/utils/format';
 	import { cn } from '$lib/utils';
@@ -8,6 +9,7 @@
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
 	import { CONSTANTS } from '$lib/constants';
+	import { LoaderCircle } from '@lucide/svelte';
 
 	const { MAX_LENGTH } = CONSTANTS.COMMENT;
 
@@ -102,6 +104,9 @@
 					type="submit"
 					disabled={!content.trim() || submitting}
 				>
+					{#if submitting}
+						<LoaderCircle class="animate-spin" />
+					{/if}
 					Submit
 				</InputGroup.Button>
 			</InputGroup.Addon>
@@ -112,7 +117,10 @@
 	{#if post.comments.length > 0}
 		<ul>
 			{#each post.comments as comment (comment.id)}
-				<li class="flex flex-col gap-5 border-b border-zinc-100 py-10 dark:border-zinc-900">
+				<li
+					class="flex flex-col gap-5 border-b border-zinc-100 py-10 dark:border-zinc-900"
+					transition:slide
+				>
 					<div class="flex items-center gap-2">
 						<Avatar username={comment.author?.username} className="size-9" />
 

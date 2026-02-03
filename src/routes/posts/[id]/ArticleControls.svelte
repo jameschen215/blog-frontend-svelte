@@ -20,8 +20,8 @@
 	let { user, post, handleCommentClick }: Props = $props();
 
 	let isAuthenticated = $derived(!!user);
-	let pendingRequests = $state(0);
 
+	let pendingRequests = $state(0);
 	let optimisticLiked = $derived(post.isLikedByCurrentUser);
 	let optimisticLikes = $derived(post._count?.likes ?? 0);
 
@@ -51,13 +51,8 @@
 			const originalCount = optimisticLikes;
 
 			// optimistic update
-			if (optimisticLiked) {
-				optimisticLikes -= 1;
-			} else {
-				optimisticLikes += 1;
-			}
-
 			optimisticLiked = !optimisticLiked;
+			optimisticLikes += optimisticLiked ? 1 : -1;
 
 			return async ({ result, update }) => {
 				pendingRequests -= 1;
