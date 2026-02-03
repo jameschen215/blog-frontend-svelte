@@ -79,7 +79,6 @@ bun.lockb
 		"*.css": "tailwindcss"
 	}
 }
-
 ```
 
 # components.json
@@ -101,7 +100,6 @@ bun.lockb
 	"typescript": true,
 	"registry": "https://shadcn-svelte.com/registry"
 }
-
 ```
 
 # eslint.config.js
@@ -148,7 +146,6 @@ export default defineConfig(
 		}
 	}
 );
-
 ```
 
 # package.json
@@ -211,7 +208,6 @@ export default defineConfig(
 		"zod": "^4.3.5"
 	}
 }
-
 ```
 
 # README.md
@@ -226,22 +222,23 @@ Unlike React's `useRef` and `forwardRef`, Svelte uses a simpler pattern for mana
 1. `bind:this` for component/element references: Use `bind:this={variable}` to get a direct reference to DOM elements or component instances.
 
 \`\`\`svelte
-  import CommentSection from './CommentSection.svelte';
-  let commentSection: CommentSection;
+import CommentSection from './CommentSection.svelte';
+let commentSection: CommentSection;
 
-	function handleCommentClick() {
-		commentSection?.scrollIntoView();
-		commentSection?.focus();
-	}
+    function handleCommentClick() {
+    	commentSection?.scrollIntoView();
+    	commentSection?.focus();
+    }
+
 \`\`\`
 
 2. Exposing component methods: Child components can export functions that parents can call, similar to React's `useImperativeHandle`:
 
 \`\`\`svelte
-  // Child component
-  export function focus() {
-    textarea?.focus();
-  }
+// Child component
+export function focus() {
+textarea?.focus();
+}
 \`\`\`
 
 3. Parent coordinates between siblings: The parent component holds references to child components and orchestrates interactions between them, rather than passing refs down as props.
@@ -254,7 +251,6 @@ Unlike React's `useRef` and `forwardRef`, Svelte uses a simpler pattern for mana
    - Use optional chaining (`?.`) when calling methods on refs to handle null cases safely
 
 This pattern keeps component internals encapsulated while allowing controlled access to specific functionality.
-
 ```
 
 # src\app.d.ts
@@ -296,7 +292,6 @@ export {};
 		<div style="display: contents">%sveltekit.body%</div>
 	</body>
 </html>
-
 ```
 
 # src\hooks.server.ts
@@ -365,9 +360,12 @@ export function logout(customFetch = fetch) {
 # src\lib\api\client.ts
 
 ```ts
-import { BASE_URL, DEFAULT_TIMEOUT } from '$lib/constants';
-
 // custom api error class
+import { CONSTANTS } from '$lib/constants';
+
+const TIMEOUT = CONSTANTS.API.TIMEOUT;
+const BASE_URL = CONSTANTS.API.BASE_URL;
+
 export class APIError extends Error {
 	status?: number;
 	response?: Response;
@@ -394,7 +392,7 @@ async function apiFetch<T>(
 	options: RequestInit = {}
 ): Promise<T> {
 	const controller = new AbortController();
-	const timeoutId = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT);
+	const timeoutId = setTimeout(() => controller.abort(), TIMEOUT);
 
 	try {
 		const res = await customFetch(BASE_URL + endpoint, {
@@ -548,7 +546,7 @@ export async function commentPost(postId: number, content: string, customFetch =
 
 	import * as Card from '$lib/components/ui/card/index.js';
 	import type { PostWithAuthor } from '$lib/types/data';
-	import { formatCompactNum } from '$lib/utils';
+	import { formatCompactNum } from '$lib/utils/format';
 	import { goto } from '$app/navigation';
 
 	let { post, isHome }: { post: PostWithAuthor; isHome: boolean } = $props();
@@ -643,7 +641,54 @@ export async function commentPost(postId: number, content: string, customFetch =
 		</div>
 	</Card.Footer>
 </Card.Root>
+```
 
+# src\lib\components\AuthFormField.svelte
+
+```svelte
+<script lang="ts">
+	import * as Field from '$lib/components/ui/field/index.js';
+	import { Input } from '$lib/components/ui/input/index.js';
+
+	interface Props {
+		name: string;
+		label: string;
+		type?: 'text' | 'password' | 'email';
+		value?: string | File;
+		errors?: string[];
+		autofocus?: boolean;
+		onClearError: () => void;
+	}
+
+	let {
+		name,
+		label,
+		type = 'text',
+		value = '',
+		errors,
+		autofocus = false,
+		onClearError
+	}: Props = $props();
+
+	const stringValue = $derived(typeof value === 'string' ? value : '');
+</script>
+
+<Field.Field class="gap-2">
+	<Field.Label for={name} class="capitalize">{label}</Field.Label>
+	<Input
+		{type}
+		id={name}
+		{name}
+		value={stringValue}
+		oninput={onClearError}
+		{autofocus}
+		class="rounded-sm"
+	/>
+
+	{#if errors && errors.length > 0}
+		<Field.FieldError id="{name}-error">{errors[0]}</Field.FieldError>
+	{/if}
+</Field.Field>
 ```
 
 # src\lib\components\Avatar.svelte
@@ -666,7 +711,38 @@ export async function commentPost(postId: number, content: string, customFetch =
 	</span>
 	<span class="sr-only">User avatar - {username[0]}</span>
 </div>
+```
 
+# src\lib\components\LoadingSpinner.svelte
+
+```svelte
+<script lang="ts">
+	import { navigating } from '$app/state';
+	import { LoaderCircle } from '@lucide/svelte';
+
+	import { fade } from 'svelte/transition';
+</script>
+
+{#if navigating.to}
+	<div
+		class="fixed inset-x-0 top-16 bottom-0 z-40 flex flex-col items-center justify-center gap-2 bg-background/80 backdrop-blur-sm"
+		transition:fade={{ duration: 150 }}
+	>
+		<LoaderCircle strokeWidth={1.25} class="h-8 w-8 animate-spin text-primary" />
+		Loading...
+	</div>
+{/if}
+
+<style>
+	@keyframes slide {
+		from {
+			transform: translateX(-100%);
+		}
+		to {
+			transform: translateX(400%);
+		}
+	}
+</style>
 ```
 
 # src\lib\components\Pagination.svelte
@@ -723,47 +799,46 @@ export async function commentPost(postId: number, content: string, customFetch =
 		</Pagination.Content>
 	{/snippet}
 </Pagination.Root>
-
 ```
 
 # src\lib\components\ui\button\button.svelte
 
 ```svelte
 <script lang="ts" module>
-	import { cn, type WithElementRef } from "$lib/utils.js";
-	import type { HTMLAnchorAttributes, HTMLButtonAttributes } from "svelte/elements";
-	import { type VariantProps, tv } from "tailwind-variants";
+	import { cn, type WithElementRef } from '$lib/utils.js';
+	import type { HTMLAnchorAttributes, HTMLButtonAttributes } from 'svelte/elements';
+	import { type VariantProps, tv } from 'tailwind-variants';
 
 	export const buttonVariants = tv({
 		base: "focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive inline-flex shrink-0 items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap transition-all outline-none focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
 		variants: {
 			variant: {
-				default: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-xs",
+				default: 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-xs',
 				destructive:
-					"bg-destructive hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60 text-white shadow-xs",
+					'bg-destructive hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60 text-white shadow-xs',
 				outline:
-					"bg-background hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50 border shadow-xs",
-				secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80 shadow-xs",
-				ghost: "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
-				link: "text-primary underline-offset-4 hover:underline",
+					'bg-background hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50 border shadow-xs',
+				secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80 shadow-xs',
+				ghost: 'hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50',
+				link: 'text-primary underline-offset-4 hover:underline'
 			},
 			size: {
-				default: "h-9 px-4 py-2 has-[>svg]:px-3",
-				sm: "h-8 gap-1.5 rounded-md px-3 has-[>svg]:px-2.5",
-				lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
-				icon: "size-9",
-				"icon-sm": "size-8",
-				"icon-lg": "size-10",
-			},
+				default: 'h-9 px-4 py-2 has-[>svg]:px-3',
+				sm: 'h-8 gap-1.5 rounded-md px-3 has-[>svg]:px-2.5',
+				lg: 'h-10 rounded-md px-6 has-[>svg]:px-4',
+				icon: 'size-9',
+				'icon-sm': 'size-8',
+				'icon-lg': 'size-10'
+			}
 		},
 		defaultVariants: {
-			variant: "default",
-			size: "default",
-		},
+			variant: 'default',
+			size: 'default'
+		}
 	});
 
-	export type ButtonVariant = VariantProps<typeof buttonVariants>["variant"];
-	export type ButtonSize = VariantProps<typeof buttonVariants>["size"];
+	export type ButtonVariant = VariantProps<typeof buttonVariants>['variant'];
+	export type ButtonSize = VariantProps<typeof buttonVariants>['size'];
 
 	export type ButtonProps = WithElementRef<HTMLButtonAttributes> &
 		WithElementRef<HTMLAnchorAttributes> & {
@@ -775,11 +850,11 @@ export async function commentPost(postId: number, content: string, customFetch =
 <script lang="ts">
 	let {
 		class: className,
-		variant = "default",
-		size = "default",
+		variant = 'default',
+		size = 'default',
 		ref = $bindable(null),
 		href = undefined,
-		type = "button",
+		type = 'button',
 		disabled,
 		children,
 		...restProps
@@ -793,7 +868,7 @@ export async function commentPost(postId: number, content: string, customFetch =
 		class={cn(buttonVariants({ variant, size }), className)}
 		href={disabled ? undefined : href}
 		aria-disabled={disabled}
-		role={disabled ? "link" : undefined}
+		role={disabled ? 'link' : undefined}
 		tabindex={disabled ? -1 : undefined}
 		{...restProps}
 	>
@@ -811,7 +886,6 @@ export async function commentPost(postId: number, content: string, customFetch =
 		{@render children?.()}
 	</button>
 {/if}
-
 ```
 
 # src\lib\components\ui\button\index.ts
@@ -841,8 +915,8 @@ export {
 
 ```svelte
 <script lang="ts">
-	import { cn, type WithElementRef } from "$lib/utils.js";
-	import type { HTMLAttributes } from "svelte/elements";
+	import { cn, type WithElementRef } from '$lib/utils.js';
+	import type { HTMLAttributes } from 'svelte/elements';
 
 	let {
 		ref = $bindable(null),
@@ -855,20 +929,19 @@ export {
 <div
 	bind:this={ref}
 	data-slot="card-action"
-	class={cn("col-start-2 row-span-2 row-start-1 self-start justify-self-end", className)}
+	class={cn('col-start-2 row-span-2 row-start-1 self-start justify-self-end', className)}
 	{...restProps}
 >
 	{@render children?.()}
 </div>
-
 ```
 
 # src\lib\components\ui\card\card-content.svelte
 
 ```svelte
 <script lang="ts">
-	import type { HTMLAttributes } from "svelte/elements";
-	import { cn, type WithElementRef } from "$lib/utils.js";
+	import type { HTMLAttributes } from 'svelte/elements';
+	import { cn, type WithElementRef } from '$lib/utils.js';
 
 	let {
 		ref = $bindable(null),
@@ -878,18 +951,17 @@ export {
 	}: WithElementRef<HTMLAttributes<HTMLDivElement>> = $props();
 </script>
 
-<div bind:this={ref} data-slot="card-content" class={cn("px-6", className)} {...restProps}>
+<div bind:this={ref} data-slot="card-content" class={cn('px-6', className)} {...restProps}>
 	{@render children?.()}
 </div>
-
 ```
 
 # src\lib\components\ui\card\card-description.svelte
 
 ```svelte
 <script lang="ts">
-	import type { HTMLAttributes } from "svelte/elements";
-	import { cn, type WithElementRef } from "$lib/utils.js";
+	import type { HTMLAttributes } from 'svelte/elements';
+	import { cn, type WithElementRef } from '$lib/utils.js';
 
 	let {
 		ref = $bindable(null),
@@ -902,20 +974,19 @@ export {
 <p
 	bind:this={ref}
 	data-slot="card-description"
-	class={cn("text-muted-foreground text-sm", className)}
+	class={cn('text-sm text-muted-foreground', className)}
 	{...restProps}
 >
 	{@render children?.()}
 </p>
-
 ```
 
 # src\lib\components\ui\card\card-footer.svelte
 
 ```svelte
 <script lang="ts">
-	import { cn, type WithElementRef } from "$lib/utils.js";
-	import type { HTMLAttributes } from "svelte/elements";
+	import { cn, type WithElementRef } from '$lib/utils.js';
+	import type { HTMLAttributes } from 'svelte/elements';
 
 	let {
 		ref = $bindable(null),
@@ -928,20 +999,19 @@ export {
 <div
 	bind:this={ref}
 	data-slot="card-footer"
-	class={cn("flex items-center px-6 [.border-t]:pt-6", className)}
+	class={cn('flex items-center px-6 [.border-t]:pt-6', className)}
 	{...restProps}
 >
 	{@render children?.()}
 </div>
-
 ```
 
 # src\lib\components\ui\card\card-header.svelte
 
 ```svelte
 <script lang="ts">
-	import { cn, type WithElementRef } from "$lib/utils.js";
-	import type { HTMLAttributes } from "svelte/elements";
+	import { cn, type WithElementRef } from '$lib/utils.js';
+	import type { HTMLAttributes } from 'svelte/elements';
 
 	let {
 		ref = $bindable(null),
@@ -955,22 +1025,21 @@ export {
 	bind:this={ref}
 	data-slot="card-header"
 	class={cn(
-		"@container/card-header grid auto-rows-min grid-rows-[auto_auto] items-start gap-1.5 px-6 has-data-[slot=card-action]:grid-cols-[1fr_auto] [.border-b]:pb-6",
+		'@container/card-header grid auto-rows-min grid-rows-[auto_auto] items-start gap-1.5 px-6 has-data-[slot=card-action]:grid-cols-[1fr_auto] [.border-b]:pb-6',
 		className
 	)}
 	{...restProps}
 >
 	{@render children?.()}
 </div>
-
 ```
 
 # src\lib\components\ui\card\card-title.svelte
 
 ```svelte
 <script lang="ts">
-	import type { HTMLAttributes } from "svelte/elements";
-	import { cn, type WithElementRef } from "$lib/utils.js";
+	import type { HTMLAttributes } from 'svelte/elements';
+	import { cn, type WithElementRef } from '$lib/utils.js';
 
 	let {
 		ref = $bindable(null),
@@ -983,20 +1052,19 @@ export {
 <div
 	bind:this={ref}
 	data-slot="card-title"
-	class={cn("leading-none font-semibold", className)}
+	class={cn('leading-none font-semibold', className)}
 	{...restProps}
 >
 	{@render children?.()}
 </div>
-
 ```
 
 # src\lib\components\ui\card\card.svelte
 
 ```svelte
 <script lang="ts">
-	import type { HTMLAttributes } from "svelte/elements";
-	import { cn, type WithElementRef } from "$lib/utils.js";
+	import type { HTMLAttributes } from 'svelte/elements';
+	import { cn, type WithElementRef } from '$lib/utils.js';
 
 	let {
 		ref = $bindable(null),
@@ -1010,14 +1078,13 @@ export {
 	bind:this={ref}
 	data-slot="card"
 	class={cn(
-		"bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm",
+		'flex flex-col gap-6 rounded-xl border bg-card py-6 text-card-foreground shadow-sm',
 		className
 	)}
 	{...restProps}
 >
 	{@render children?.()}
 </div>
-
 ```
 
 # src\lib\components\ui\card\index.ts
@@ -1055,7 +1122,7 @@ export {
 
 ```svelte
 <script lang="ts">
-	import { DropdownMenu as DropdownMenuPrimitive } from "bits-ui";
+	import { DropdownMenu as DropdownMenuPrimitive } from 'bits-ui';
 
 	let {
 		ref = $bindable(null),
@@ -1070,18 +1137,17 @@ export {
 	data-slot="dropdown-menu-checkbox-group"
 	{...restProps}
 />
-
 ```
 
 # src\lib\components\ui\dropdown-menu\dropdown-menu-checkbox-item.svelte
 
 ```svelte
 <script lang="ts">
-	import { DropdownMenu as DropdownMenuPrimitive } from "bits-ui";
-	import CheckIcon from "@lucide/svelte/icons/check";
-	import MinusIcon from "@lucide/svelte/icons/minus";
-	import { cn, type WithoutChildrenOrChild } from "$lib/utils.js";
-	import type { Snippet } from "svelte";
+	import { DropdownMenu as DropdownMenuPrimitive } from 'bits-ui';
+	import CheckIcon from '@lucide/svelte/icons/check';
+	import MinusIcon from '@lucide/svelte/icons/minus';
+	import { cn, type WithoutChildrenOrChild } from '$lib/utils.js';
+	import type { Snippet } from 'svelte';
 
 	let {
 		ref = $bindable(null),
@@ -1101,35 +1167,32 @@ export {
 	bind:indeterminate
 	data-slot="dropdown-menu-checkbox-item"
 	class={cn(
-		"focus:bg-accent focus:text-accent-foreground relative flex cursor-default items-center gap-2 rounded-sm py-1.5 ps-8 pe-2 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+		"relative flex cursor-default items-center gap-2 rounded-sm py-1.5 ps-8 pe-2 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
 		className
 	)}
 	{...restProps}
 >
 	{#snippet children({ checked, indeterminate })}
-		<span
-			class="pointer-events-none absolute start-2 flex size-3.5 items-center justify-center"
-		>
+		<span class="pointer-events-none absolute start-2 flex size-3.5 items-center justify-center">
 			{#if indeterminate}
 				<MinusIcon class="size-4" />
 			{:else}
-				<CheckIcon class={cn("size-4", !checked && "text-transparent")} />
+				<CheckIcon class={cn('size-4', !checked && 'text-transparent')} />
 			{/if}
 		</span>
 		{@render childrenProp?.()}
 	{/snippet}
 </DropdownMenuPrimitive.CheckboxItem>
-
 ```
 
 # src\lib\components\ui\dropdown-menu\dropdown-menu-content.svelte
 
 ```svelte
 <script lang="ts">
-	import { cn, type WithoutChildrenOrChild } from "$lib/utils.js";
-	import DropdownMenuPortal from "./dropdown-menu-portal.svelte";
-	import { DropdownMenu as DropdownMenuPrimitive } from "bits-ui";
-	import type { ComponentProps } from "svelte";
+	import { cn, type WithoutChildrenOrChild } from '$lib/utils.js';
+	import DropdownMenuPortal from './dropdown-menu-portal.svelte';
+	import { DropdownMenu as DropdownMenuPrimitive } from 'bits-ui';
+	import type { ComponentProps } from 'svelte';
 
 	let {
 		ref = $bindable(null),
@@ -1148,22 +1211,21 @@ export {
 		data-slot="dropdown-menu-content"
 		{sideOffset}
 		class={cn(
-			"bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-end-2 data-[side=right]:slide-in-from-start-2 data-[side=top]:slide-in-from-bottom-2 z-50 max-h-(--bits-dropdown-menu-content-available-height) min-w-[8rem] origin-(--bits-dropdown-menu-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-md border p-1 shadow-md outline-none",
+			'z-50 max-h-(--bits-dropdown-menu-content-available-height) min-w-[8rem] origin-(--bits-dropdown-menu-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-md border bg-popover p-1 text-popover-foreground shadow-md outline-none data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-end-2 data-[side=right]:slide-in-from-start-2 data-[side=top]:slide-in-from-bottom-2 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95',
 			className
 		)}
 		{...restProps}
 	/>
 </DropdownMenuPortal>
-
 ```
 
 # src\lib\components\ui\dropdown-menu\dropdown-menu-group-heading.svelte
 
 ```svelte
 <script lang="ts">
-	import { DropdownMenu as DropdownMenuPrimitive } from "bits-ui";
-	import { cn } from "$lib/utils.js";
-	import type { ComponentProps } from "svelte";
+	import { DropdownMenu as DropdownMenuPrimitive } from 'bits-ui';
+	import { cn } from '$lib/utils.js';
+	import type { ComponentProps } from 'svelte';
 
 	let {
 		ref = $bindable(null),
@@ -1179,41 +1241,39 @@ export {
 	bind:ref
 	data-slot="dropdown-menu-group-heading"
 	data-inset={inset}
-	class={cn("px-2 py-1.5 text-sm font-semibold data-[inset]:ps-8", className)}
+	class={cn('px-2 py-1.5 text-sm font-semibold data-[inset]:ps-8', className)}
 	{...restProps}
 />
-
 ```
 
 # src\lib\components\ui\dropdown-menu\dropdown-menu-group.svelte
 
 ```svelte
 <script lang="ts">
-	import { DropdownMenu as DropdownMenuPrimitive } from "bits-ui";
+	import { DropdownMenu as DropdownMenuPrimitive } from 'bits-ui';
 
 	let { ref = $bindable(null), ...restProps }: DropdownMenuPrimitive.GroupProps = $props();
 </script>
 
 <DropdownMenuPrimitive.Group bind:ref data-slot="dropdown-menu-group" {...restProps} />
-
 ```
 
 # src\lib\components\ui\dropdown-menu\dropdown-menu-item.svelte
 
 ```svelte
 <script lang="ts">
-	import { cn } from "$lib/utils.js";
-	import { DropdownMenu as DropdownMenuPrimitive } from "bits-ui";
+	import { cn } from '$lib/utils.js';
+	import { DropdownMenu as DropdownMenuPrimitive } from 'bits-ui';
 
 	let {
 		ref = $bindable(null),
 		class: className,
 		inset,
-		variant = "default",
+		variant = 'default',
 		...restProps
 	}: DropdownMenuPrimitive.ItemProps & {
 		inset?: boolean;
-		variant?: "default" | "destructive";
+		variant?: 'default' | 'destructive';
 	} = $props();
 </script>
 
@@ -1223,20 +1283,19 @@ export {
 	data-inset={inset}
 	data-variant={variant}
 	class={cn(
-		"data-highlighted:bg-accent data-highlighted:text-accent-foreground data-[variant=destructive]:text-destructive data-[variant=destructive]:data-highlighted:bg-destructive/10 dark:data-[variant=destructive]:data-highlighted:bg-destructive/20 data-[variant=destructive]:data-highlighted:text-destructive data-[variant=destructive]:*:[svg]:!text-destructive [&_svg:not([class*='text-'])]:text-muted-foreground relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[inset]:ps-8 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+		"relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none data-highlighted:bg-accent data-highlighted:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[inset]:ps-8 data-[variant=destructive]:text-destructive data-[variant=destructive]:data-highlighted:bg-destructive/10 data-[variant=destructive]:data-highlighted:text-destructive dark:data-[variant=destructive]:data-highlighted:bg-destructive/20 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg:not([class*='text-'])]:text-muted-foreground data-[variant=destructive]:*:[svg]:!text-destructive",
 		className
 	)}
 	{...restProps}
 />
-
 ```
 
 # src\lib\components\ui\dropdown-menu\dropdown-menu-label.svelte
 
 ```svelte
 <script lang="ts">
-	import { cn, type WithElementRef } from "$lib/utils.js";
-	import type { HTMLAttributes } from "svelte/elements";
+	import { cn, type WithElementRef } from '$lib/utils.js';
+	import type { HTMLAttributes } from 'svelte/elements';
 
 	let {
 		ref = $bindable(null),
@@ -1253,32 +1312,30 @@ export {
 	bind:this={ref}
 	data-slot="dropdown-menu-label"
 	data-inset={inset}
-	class={cn("px-2 py-1.5 text-sm font-semibold data-[inset]:ps-8", className)}
+	class={cn('px-2 py-1.5 text-sm font-semibold data-[inset]:ps-8', className)}
 	{...restProps}
 >
 	{@render children?.()}
 </div>
-
 ```
 
 # src\lib\components\ui\dropdown-menu\dropdown-menu-portal.svelte
 
 ```svelte
 <script lang="ts">
-	import { DropdownMenu as DropdownMenuPrimitive } from "bits-ui";
+	import { DropdownMenu as DropdownMenuPrimitive } from 'bits-ui';
 
 	let { ...restProps }: DropdownMenuPrimitive.PortalProps = $props();
 </script>
 
 <DropdownMenuPrimitive.Portal {...restProps} />
-
 ```
 
 # src\lib\components\ui\dropdown-menu\dropdown-menu-radio-group.svelte
 
 ```svelte
 <script lang="ts">
-	import { DropdownMenu as DropdownMenuPrimitive } from "bits-ui";
+	import { DropdownMenu as DropdownMenuPrimitive } from 'bits-ui';
 
 	let {
 		ref = $bindable(null),
@@ -1293,16 +1350,15 @@ export {
 	data-slot="dropdown-menu-radio-group"
 	{...restProps}
 />
-
 ```
 
 # src\lib\components\ui\dropdown-menu\dropdown-menu-radio-item.svelte
 
 ```svelte
 <script lang="ts">
-	import { DropdownMenu as DropdownMenuPrimitive } from "bits-ui";
-	import CircleIcon from "@lucide/svelte/icons/circle";
-	import { cn, type WithoutChild } from "$lib/utils.js";
+	import { DropdownMenu as DropdownMenuPrimitive } from 'bits-ui';
+	import CircleIcon from '@lucide/svelte/icons/circle';
+	import { cn, type WithoutChild } from '$lib/utils.js';
 
 	let {
 		ref = $bindable(null),
@@ -1316,15 +1372,13 @@ export {
 	bind:ref
 	data-slot="dropdown-menu-radio-item"
 	class={cn(
-		"focus:bg-accent focus:text-accent-foreground relative flex cursor-default items-center gap-2 rounded-sm py-1.5 ps-8 pe-2 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+		"relative flex cursor-default items-center gap-2 rounded-sm py-1.5 ps-8 pe-2 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
 		className
 	)}
 	{...restProps}
 >
 	{#snippet children({ checked })}
-		<span
-			class="pointer-events-none absolute start-2 flex size-3.5 items-center justify-center"
-		>
+		<span class="pointer-events-none absolute start-2 flex size-3.5 items-center justify-center">
 			{#if checked}
 				<CircleIcon class="size-2 fill-current" />
 			{/if}
@@ -1332,15 +1386,14 @@ export {
 		{@render childrenProp?.({ checked })}
 	{/snippet}
 </DropdownMenuPrimitive.RadioItem>
-
 ```
 
 # src\lib\components\ui\dropdown-menu\dropdown-menu-separator.svelte
 
 ```svelte
 <script lang="ts">
-	import { DropdownMenu as DropdownMenuPrimitive } from "bits-ui";
-	import { cn } from "$lib/utils.js";
+	import { DropdownMenu as DropdownMenuPrimitive } from 'bits-ui';
+	import { cn } from '$lib/utils.js';
 
 	let {
 		ref = $bindable(null),
@@ -1352,18 +1405,17 @@ export {
 <DropdownMenuPrimitive.Separator
 	bind:ref
 	data-slot="dropdown-menu-separator"
-	class={cn("bg-border -mx-1 my-1 h-px", className)}
+	class={cn('-mx-1 my-1 h-px bg-border', className)}
 	{...restProps}
 />
-
 ```
 
 # src\lib\components\ui\dropdown-menu\dropdown-menu-shortcut.svelte
 
 ```svelte
 <script lang="ts">
-	import type { HTMLAttributes } from "svelte/elements";
-	import { cn, type WithElementRef } from "$lib/utils.js";
+	import type { HTMLAttributes } from 'svelte/elements';
+	import { cn, type WithElementRef } from '$lib/utils.js';
 
 	let {
 		ref = $bindable(null),
@@ -1376,20 +1428,19 @@ export {
 <span
 	bind:this={ref}
 	data-slot="dropdown-menu-shortcut"
-	class={cn("text-muted-foreground ms-auto text-xs tracking-widest", className)}
+	class={cn('ms-auto text-xs tracking-widest text-muted-foreground', className)}
 	{...restProps}
 >
 	{@render children?.()}
 </span>
-
 ```
 
 # src\lib\components\ui\dropdown-menu\dropdown-menu-sub-content.svelte
 
 ```svelte
 <script lang="ts">
-	import { DropdownMenu as DropdownMenuPrimitive } from "bits-ui";
-	import { cn } from "$lib/utils.js";
+	import { DropdownMenu as DropdownMenuPrimitive } from 'bits-ui';
+	import { cn } from '$lib/utils.js';
 
 	let {
 		ref = $bindable(null),
@@ -1402,21 +1453,20 @@ export {
 	bind:ref
 	data-slot="dropdown-menu-sub-content"
 	class={cn(
-		"bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-end-2 data-[side=right]:slide-in-from-start-2 data-[side=top]:slide-in-from-bottom-2 z-50 min-w-[8rem] origin-(--bits-dropdown-menu-content-transform-origin) overflow-hidden rounded-md border p-1 shadow-lg",
+		'z-50 min-w-[8rem] origin-(--bits-dropdown-menu-content-transform-origin) overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-lg data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-end-2 data-[side=right]:slide-in-from-start-2 data-[side=top]:slide-in-from-bottom-2 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95',
 		className
 	)}
 	{...restProps}
 />
-
 ```
 
 # src\lib\components\ui\dropdown-menu\dropdown-menu-sub-trigger.svelte
 
 ```svelte
 <script lang="ts">
-	import { DropdownMenu as DropdownMenuPrimitive } from "bits-ui";
-	import ChevronRightIcon from "@lucide/svelte/icons/chevron-right";
-	import { cn } from "$lib/utils.js";
+	import { DropdownMenu as DropdownMenuPrimitive } from 'bits-ui';
+	import ChevronRightIcon from '@lucide/svelte/icons/chevron-right';
+	import { cn } from '$lib/utils.js';
 
 	let {
 		ref = $bindable(null),
@@ -1434,7 +1484,7 @@ export {
 	data-slot="dropdown-menu-sub-trigger"
 	data-inset={inset}
 	class={cn(
-		"data-highlighted:bg-accent data-highlighted:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground [&_svg:not([class*='text-'])]:text-muted-foreground flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[inset]:ps-8 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+		"flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none data-highlighted:bg-accent data-highlighted:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[inset]:ps-8 data-[state=open]:bg-accent data-[state=open]:text-accent-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg:not([class*='text-'])]:text-muted-foreground",
 		className
 	)}
 	{...restProps}
@@ -1442,46 +1492,42 @@ export {
 	{@render children?.()}
 	<ChevronRightIcon class="ms-auto size-4" />
 </DropdownMenuPrimitive.SubTrigger>
-
 ```
 
 # src\lib\components\ui\dropdown-menu\dropdown-menu-sub.svelte
 
 ```svelte
 <script lang="ts">
-	import { DropdownMenu as DropdownMenuPrimitive } from "bits-ui";
+	import { DropdownMenu as DropdownMenuPrimitive } from 'bits-ui';
 
 	let { open = $bindable(false), ...restProps }: DropdownMenuPrimitive.SubProps = $props();
 </script>
 
 <DropdownMenuPrimitive.Sub bind:open {...restProps} />
-
 ```
 
 # src\lib\components\ui\dropdown-menu\dropdown-menu-trigger.svelte
 
 ```svelte
 <script lang="ts">
-	import { DropdownMenu as DropdownMenuPrimitive } from "bits-ui";
+	import { DropdownMenu as DropdownMenuPrimitive } from 'bits-ui';
 
 	let { ref = $bindable(null), ...restProps }: DropdownMenuPrimitive.TriggerProps = $props();
 </script>
 
 <DropdownMenuPrimitive.Trigger bind:ref data-slot="dropdown-menu-trigger" {...restProps} />
-
 ```
 
 # src\lib\components\ui\dropdown-menu\dropdown-menu.svelte
 
 ```svelte
 <script lang="ts">
-	import { DropdownMenu as DropdownMenuPrimitive } from "bits-ui";
+	import { DropdownMenu as DropdownMenuPrimitive } from 'bits-ui';
 
 	let { open = $bindable(false), ...restProps }: DropdownMenuPrimitive.RootProps = $props();
 </script>
 
 <DropdownMenuPrimitive.Root bind:open {...restProps} />
-
 ```
 
 # src\lib\components\ui\dropdown-menu\index.ts
@@ -1548,8 +1594,8 @@ export {
 
 ```svelte
 <script lang="ts">
-	import { cn, type WithElementRef } from "$lib/utils.js";
-	import type { HTMLAttributes } from "svelte/elements";
+	import { cn, type WithElementRef } from '$lib/utils.js';
+	import type { HTMLAttributes } from 'svelte/elements';
 
 	let {
 		ref = $bindable(null),
@@ -1562,20 +1608,19 @@ export {
 <div
 	bind:this={ref}
 	data-slot="field-content"
-	class={cn("group/field-content flex flex-1 flex-col gap-1.5 leading-snug", className)}
+	class={cn('group/field-content flex flex-1 flex-col gap-1.5 leading-snug', className)}
 	{...restProps}
 >
 	{@render children?.()}
 </div>
-
 ```
 
 # src\lib\components\ui\field\field-description.svelte
 
 ```svelte
 <script lang="ts">
-	import { cn, type WithElementRef } from "$lib/utils.js";
-	import type { HTMLAttributes } from "svelte/elements";
+	import { cn, type WithElementRef } from '$lib/utils.js';
+	import type { HTMLAttributes } from 'svelte/elements';
 
 	let {
 		ref = $bindable(null),
@@ -1589,25 +1634,24 @@ export {
 	bind:this={ref}
 	data-slot="field-description"
 	class={cn(
-		"text-muted-foreground text-sm leading-normal font-normal group-has-[[data-orientation=horizontal]]/field:text-balance",
-		"last:mt-0 nth-last-2:-mt-1 [[data-variant=legend]+&]:-mt-1.5",
-		"[&>a:hover]:text-primary [&>a]:underline [&>a]:underline-offset-4",
+		'text-sm leading-normal font-normal text-muted-foreground group-has-[[data-orientation=horizontal]]/field:text-balance',
+		'last:mt-0 nth-last-2:-mt-1 [[data-variant=legend]+&]:-mt-1.5',
+		'[&>a]:underline [&>a]:underline-offset-4 [&>a:hover]:text-primary',
 		className
 	)}
 	{...restProps}
 >
 	{@render children?.()}
 </p>
-
 ```
 
 # src\lib\components\ui\field\field-error.svelte
 
 ```svelte
 <script lang="ts">
-	import { cn, type WithElementRef } from "$lib/utils.js";
-	import type { HTMLAttributes } from "svelte/elements";
-	import type { Snippet } from "svelte";
+	import { cn, type WithElementRef } from '$lib/utils.js';
+	import type { HTMLAttributes } from 'svelte/elements';
+	import type { Snippet } from 'svelte';
 
 	let {
 		ref = $bindable(null),
@@ -1644,7 +1688,7 @@ export {
 		bind:this={ref}
 		role="alert"
 		data-slot="field-error"
-		class={cn("text-destructive text-sm font-normal", className)}
+		class={cn('text-sm font-normal text-destructive', className)}
 		{...restProps}
 	>
 		{#if children}
@@ -1662,7 +1706,6 @@ export {
 		{/if}
 	</div>
 {/if}
-
 ```
 
 # src\lib\components\ui\field\field-group.svelte
@@ -1691,16 +1734,15 @@ export {
 >
 	{@render children?.()}
 </div>
-
 ```
 
 # src\lib\components\ui\field\field-label.svelte
 
 ```svelte
 <script lang="ts">
-	import { Label } from "$lib/components/ui/label/index.js";
-	import { cn } from "$lib/utils.js";
-	import type { ComponentProps } from "svelte";
+	import { Label } from '$lib/components/ui/label/index.js';
+	import { cn } from '$lib/utils.js';
+	import type { ComponentProps } from 'svelte';
 
 	let {
 		ref = $bindable(null),
@@ -1714,33 +1756,32 @@ export {
 	bind:ref
 	data-slot="field-label"
 	class={cn(
-		"group/field-label peer/field-label flex w-fit gap-2 leading-snug group-data-[disabled=true]/field:opacity-50",
-		"has-[>[data-slot=field]]:w-full has-[>[data-slot=field]]:flex-col has-[>[data-slot=field]]:rounded-md has-[>[data-slot=field]]:border [&>*]:data-[slot=field]:p-4",
-		"has-data-[state=checked]:bg-primary/5 has-data-[state=checked]:border-primary dark:has-data-[state=checked]:bg-primary/10",
+		'group/field-label peer/field-label flex w-fit gap-2 leading-snug group-data-[disabled=true]/field:opacity-50',
+		'has-[>[data-slot=field]]:w-full has-[>[data-slot=field]]:flex-col has-[>[data-slot=field]]:rounded-md has-[>[data-slot=field]]:border [&>*]:data-[slot=field]:p-4',
+		'has-data-[state=checked]:border-primary has-data-[state=checked]:bg-primary/5 dark:has-data-[state=checked]:bg-primary/10',
 		className
 	)}
 	{...restProps}
 >
 	{@render children?.()}
 </Label>
-
 ```
 
 # src\lib\components\ui\field\field-legend.svelte
 
 ```svelte
 <script lang="ts">
-	import { cn, type WithElementRef } from "$lib/utils.js";
-	import type { HTMLAttributes } from "svelte/elements";
+	import { cn, type WithElementRef } from '$lib/utils.js';
+	import type { HTMLAttributes } from 'svelte/elements';
 
 	let {
 		ref = $bindable(null),
 		class: className,
-		variant = "legend",
+		variant = 'legend',
 		children,
 		...restProps
 	}: WithElementRef<HTMLAttributes<HTMLLegendElement>> & {
-		variant?: "legend" | "label";
+		variant?: 'legend' | 'label';
 	} = $props();
 </script>
 
@@ -1749,26 +1790,25 @@ export {
 	data-slot="field-legend"
 	data-variant={variant}
 	class={cn(
-		"mb-3 font-medium",
-		"data-[variant=legend]:text-base",
-		"data-[variant=label]:text-sm",
+		'mb-3 font-medium',
+		'data-[variant=legend]:text-base',
+		'data-[variant=label]:text-sm',
 		className
 	)}
 	{...restProps}
 >
 	{@render children?.()}
 </legend>
-
 ```
 
 # src\lib\components\ui\field\field-separator.svelte
 
 ```svelte
 <script lang="ts">
-	import { Separator } from "$lib/components/ui/separator/index.js";
-	import { cn, type WithElementRef } from "$lib/utils.js";
-	import type { HTMLAttributes } from "svelte/elements";
-	import type { Snippet } from "svelte";
+	import { Separator } from '$lib/components/ui/separator/index.js';
+	import { cn, type WithElementRef } from '$lib/utils.js';
+	import type { HTMLAttributes } from 'svelte/elements';
+	import type { Snippet } from 'svelte';
 
 	let {
 		ref = $bindable(null),
@@ -1786,31 +1826,27 @@ export {
 	bind:this={ref}
 	data-slot="field-separator"
 	data-content={hasContent}
-	class={cn(
-		"relative -my-2 h-5 text-sm group-data-[variant=outline]/field-group:-mb-2",
-		className
-	)}
+	class={cn('relative -my-2 h-5 text-sm group-data-[variant=outline]/field-group:-mb-2', className)}
 	{...restProps}
 >
 	<Separator class="absolute inset-0 top-1/2" />
 	{#if children}
 		<span
-			class="bg-background text-muted-foreground relative mx-auto block w-fit px-2"
+			class="relative mx-auto block w-fit bg-background px-2 text-muted-foreground"
 			data-slot="field-separator-content"
 		>
 			{@render children()}
 		</span>
 	{/if}
 </div>
-
 ```
 
 # src\lib\components\ui\field\field-set.svelte
 
 ```svelte
 <script lang="ts">
-	import { cn, type WithElementRef } from "$lib/utils.js";
-	import type { HTMLFieldsetAttributes } from "svelte/elements";
+	import { cn, type WithElementRef } from '$lib/utils.js';
+	import type { HTMLFieldsetAttributes } from 'svelte/elements';
 
 	let {
 		ref = $bindable(null),
@@ -1824,23 +1860,22 @@ export {
 	bind:this={ref}
 	data-slot="field-set"
 	class={cn(
-		"flex flex-col gap-6",
-		"has-[>[data-slot=checkbox-group]]:gap-3 has-[>[data-slot=radio-group]]:gap-3",
+		'flex flex-col gap-6',
+		'has-[>[data-slot=checkbox-group]]:gap-3 has-[>[data-slot=radio-group]]:gap-3',
 		className
 	)}
 	{...restProps}
 >
 	{@render children?.()}
 </fieldset>
-
 ```
 
 # src\lib\components\ui\field\field-title.svelte
 
 ```svelte
 <script lang="ts">
-	import { cn, type WithElementRef } from "$lib/utils.js";
-	import type { HTMLAttributes } from "svelte/elements";
+	import { cn, type WithElementRef } from '$lib/utils.js';
+	import type { HTMLAttributes } from 'svelte/elements';
 
 	let {
 		ref = $bindable(null),
@@ -1854,55 +1889,54 @@ export {
 	bind:this={ref}
 	data-slot="field-title"
 	class={cn(
-		"flex w-fit items-center gap-2 text-sm leading-snug font-medium group-data-[disabled=true]/field:opacity-50",
+		'flex w-fit items-center gap-2 text-sm leading-snug font-medium group-data-[disabled=true]/field:opacity-50',
 		className
 	)}
 	{...restProps}
 >
 	{@render children?.()}
 </div>
-
 ```
 
 # src\lib\components\ui\field\field.svelte
 
 ```svelte
 <script lang="ts" module>
-	import { tv, type VariantProps } from "tailwind-variants";
+	import { tv, type VariantProps } from 'tailwind-variants';
 
 	export const fieldVariants = tv({
-		base: "group/field data-[invalid=true]:text-destructive flex w-full gap-3",
+		base: 'group/field data-[invalid=true]:text-destructive flex w-full gap-3',
 		variants: {
 			orientation: {
-				vertical: "flex-col [&>*]:w-full [&>.sr-only]:w-auto",
+				vertical: 'flex-col [&>*]:w-full [&>.sr-only]:w-auto',
 				horizontal: [
-					"flex-row items-center",
-					"[&>[data-slot=field-label]]:flex-auto",
-					"has-[>[data-slot=field-content]]:items-start has-[>[data-slot=field-content]]:[&>[role=checkbox],[role=radio]]:mt-px",
+					'flex-row items-center',
+					'[&>[data-slot=field-label]]:flex-auto',
+					'has-[>[data-slot=field-content]]:items-start has-[>[data-slot=field-content]]:[&>[role=checkbox],[role=radio]]:mt-px'
 				],
 				responsive: [
-					"flex-col @md/field-group:flex-row @md/field-group:items-center [&>*]:w-full @md/field-group:[&>*]:w-auto [&>.sr-only]:w-auto",
-					"@md/field-group:[&>[data-slot=field-label]]:flex-auto",
-					"@md/field-group:has-[>[data-slot=field-content]]:items-start @md/field-group:has-[>[data-slot=field-content]]:[&>[role=checkbox],[role=radio]]:mt-px",
-				],
-			},
+					'flex-col @md/field-group:flex-row @md/field-group:items-center [&>*]:w-full @md/field-group:[&>*]:w-auto [&>.sr-only]:w-auto',
+					'@md/field-group:[&>[data-slot=field-label]]:flex-auto',
+					'@md/field-group:has-[>[data-slot=field-content]]:items-start @md/field-group:has-[>[data-slot=field-content]]:[&>[role=checkbox],[role=radio]]:mt-px'
+				]
+			}
 		},
 		defaultVariants: {
-			orientation: "vertical",
-		},
+			orientation: 'vertical'
+		}
 	});
 
-	export type FieldOrientation = VariantProps<typeof fieldVariants>["orientation"];
+	export type FieldOrientation = VariantProps<typeof fieldVariants>['orientation'];
 </script>
 
 <script lang="ts">
-	import { cn, type WithElementRef } from "$lib/utils.js";
-	import type { HTMLAttributes } from "svelte/elements";
+	import { cn, type WithElementRef } from '$lib/utils.js';
+	import type { HTMLAttributes } from 'svelte/elements';
 
 	let {
 		ref = $bindable(null),
 		class: className,
-		orientation = "vertical",
+		orientation = 'vertical',
 		children,
 		...restProps
 	}: WithElementRef<HTMLAttributes<HTMLDivElement>> & {
@@ -1920,7 +1954,6 @@ export {
 >
 	{@render children?.()}
 </div>
-
 ```
 
 # src\lib\components\ui\field\index.ts
@@ -1994,38 +2027,36 @@ export {
 
 ```svelte
 <script lang="ts" module>
-	import { tv, type VariantProps } from "tailwind-variants";
+	import { tv, type VariantProps } from 'tailwind-variants';
 	export const inputGroupAddonVariants = tv({
 		base: "text-muted-foreground flex h-auto cursor-text items-center justify-center gap-2 py-1.5 text-sm font-medium select-none group-data-[disabled=true]/input-group:opacity-50 [&>kbd]:rounded-[calc(var(--radius)-5px)] [&>svg:not([class*='size-'])]:size-4",
 		variants: {
 			align: {
-				"inline-start":
-					"order-first ps-3 has-[>button]:ms-[-0.45rem] has-[>kbd]:ms-[-0.35rem]",
-				"inline-end":
-					"order-last pe-3 has-[>button]:me-[-0.45rem] has-[>kbd]:me-[-0.35rem]",
-				"block-start":
-					"order-first w-full justify-start px-3 pt-3 group-has-[>input]/input-group:pt-2.5 [.border-b]:pb-3",
-				"block-end":
-					"order-last w-full justify-start px-3 pb-3 group-has-[>input]/input-group:pb-2.5 [.border-t]:pt-3",
-			},
+				'inline-start': 'order-first ps-3 has-[>button]:ms-[-0.45rem] has-[>kbd]:ms-[-0.35rem]',
+				'inline-end': 'order-last pe-3 has-[>button]:me-[-0.45rem] has-[>kbd]:me-[-0.35rem]',
+				'block-start':
+					'order-first w-full justify-start px-3 pt-3 group-has-[>input]/input-group:pt-2.5 [.border-b]:pb-3',
+				'block-end':
+					'order-last w-full justify-start px-3 pb-3 group-has-[>input]/input-group:pb-2.5 [.border-t]:pt-3'
+			}
 		},
 		defaultVariants: {
-			align: "inline-start",
-		},
+			align: 'inline-start'
+		}
 	});
 
-	export type InputGroupAddonAlign = VariantProps<typeof inputGroupAddonVariants>["align"];
+	export type InputGroupAddonAlign = VariantProps<typeof inputGroupAddonVariants>['align'];
 </script>
 
 <script lang="ts">
-	import { cn, type WithElementRef } from "$lib/utils.js";
-	import type { HTMLAttributes } from "svelte/elements";
+	import { cn, type WithElementRef } from '$lib/utils.js';
+	import type { HTMLAttributes } from 'svelte/elements';
 
 	let {
 		ref = $bindable(null),
 		class: className,
 		children,
-		align = "inline-start",
+		align = 'inline-start',
 		...restProps
 	}: WithElementRef<HTMLAttributes<HTMLDivElement>> & {
 		align?: InputGroupAddonAlign;
@@ -2039,56 +2070,55 @@ export {
 	data-align={align}
 	class={cn(inputGroupAddonVariants({ align }), className)}
 	onclick={(e) => {
-		if ((e.target as HTMLElement).closest("button")) {
+		if ((e.target as HTMLElement).closest('button')) {
 			return;
 		}
-		e.currentTarget.parentElement?.querySelector("input")?.focus();
+		e.currentTarget.parentElement?.querySelector('input')?.focus();
 	}}
 	{...restProps}
 >
 	{@render children?.()}
 </div>
-
 ```
 
 # src\lib\components\ui\input-group\input-group-button.svelte
 
 ```svelte
 <script lang="ts" module>
-	import { tv, type VariantProps } from "tailwind-variants";
+	import { tv, type VariantProps } from 'tailwind-variants';
 
 	const inputGroupButtonVariants = tv({
-		base: "flex items-center gap-2 text-sm shadow-none",
+		base: 'flex items-center gap-2 text-sm shadow-none',
 		variants: {
 			size: {
 				xs: "h-6 gap-1 rounded-[calc(var(--radius)-5px)] px-2 has-[>svg]:px-2 [&>svg:not([class*='size-'])]:size-3.5",
-				sm: "h-8 gap-1.5 rounded-md px-2.5 has-[>svg]:px-2.5",
-				"icon-xs": "size-6 rounded-[calc(var(--radius)-5px)] p-0 has-[>svg]:p-0",
-				"icon-sm": "size-8 p-0 has-[>svg]:p-0",
-			},
+				sm: 'h-8 gap-1.5 rounded-md px-2.5 has-[>svg]:px-2.5',
+				'icon-xs': 'size-6 rounded-[calc(var(--radius)-5px)] p-0 has-[>svg]:p-0',
+				'icon-sm': 'size-8 p-0 has-[>svg]:p-0'
+			}
 		},
 		defaultVariants: {
-			size: "xs",
-		},
+			size: 'xs'
+		}
 	});
 
-	export type InputGroupButtonSize = VariantProps<typeof inputGroupButtonVariants>["size"];
+	export type InputGroupButtonSize = VariantProps<typeof inputGroupButtonVariants>['size'];
 </script>
 
 <script lang="ts">
-	import { cn } from "$lib/utils.js";
-	import type { ComponentProps } from "svelte";
-	import { Button } from "$lib/components/ui/button/index.js";
+	import { cn } from '$lib/utils.js';
+	import type { ComponentProps } from 'svelte';
+	import { Button } from '$lib/components/ui/button/index.js';
 
 	let {
 		ref = $bindable(null),
 		class: className,
 		children,
-		type = "button",
-		variant = "ghost",
-		size = "xs",
+		type = 'button',
+		variant = 'ghost',
+		size = 'xs',
 		...restProps
-	}: Omit<ComponentProps<typeof Button>, "href" | "size"> & {
+	}: Omit<ComponentProps<typeof Button>, 'href' | 'size'> & {
 		size?: InputGroupButtonSize;
 	} = $props();
 </script>
@@ -2103,16 +2133,15 @@ export {
 >
 	{@render children?.()}
 </Button>
-
 ```
 
 # src\lib\components\ui\input-group\input-group-input.svelte
 
 ```svelte
 <script lang="ts">
-	import { cn } from "$lib/utils.js";
-	import type { ComponentProps } from "svelte";
-	import { Input } from "$lib/components/ui/input/index.js";
+	import { cn } from '$lib/utils.js';
+	import type { ComponentProps } from 'svelte';
+	import { Input } from '$lib/components/ui/input/index.js';
 
 	let {
 		ref = $bindable(null),
@@ -2126,21 +2155,20 @@ export {
 	bind:ref
 	data-slot="input-group-control"
 	class={cn(
-		"flex-1 rounded-none border-0 bg-transparent shadow-none focus-visible:ring-0 dark:bg-transparent",
+		'flex-1 rounded-none border-0 bg-transparent shadow-none focus-visible:ring-0 dark:bg-transparent',
 		className
 	)}
 	bind:value
 	{...props}
 />
-
 ```
 
 # src\lib\components\ui\input-group\input-group-text.svelte
 
 ```svelte
 <script lang="ts">
-	import { cn, type WithElementRef } from "$lib/utils.js";
-	import type { HTMLAttributes } from "svelte/elements";
+	import { cn, type WithElementRef } from '$lib/utils.js';
+	import type { HTMLAttributes } from 'svelte/elements';
 
 	let {
 		ref = $bindable(null),
@@ -2153,23 +2181,22 @@ export {
 <span
 	bind:this={ref}
 	class={cn(
-		"text-muted-foreground flex items-center gap-2 text-sm [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4",
+		"flex items-center gap-2 text-sm text-muted-foreground [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4",
 		className
 	)}
 	{...restProps}
 >
 	{@render children?.()}
 </span>
-
 ```
 
 # src\lib\components\ui\input-group\input-group-textarea.svelte
 
 ```svelte
 <script lang="ts">
-	import { cn } from "$lib/utils.js";
-	import { Textarea } from "$lib/components/ui/textarea/index.js";
-	import type { ComponentProps } from "svelte";
+	import { cn } from '$lib/utils.js';
+	import { Textarea } from '$lib/components/ui/textarea/index.js';
+	import type { ComponentProps } from 'svelte';
 
 	let {
 		ref = $bindable(null),
@@ -2183,21 +2210,20 @@ export {
 	bind:ref
 	data-slot="input-group-control"
 	class={cn(
-		"flex-1 resize-none rounded-none border-0 bg-transparent py-3 shadow-none focus-visible:ring-0 dark:bg-transparent",
+		'flex-1 resize-none rounded-none border-0 bg-transparent py-3 shadow-none focus-visible:ring-0 dark:bg-transparent',
 		className
 	)}
 	bind:value
 	{...props}
 />
-
 ```
 
 # src\lib\components\ui\input-group\input-group.svelte
 
 ```svelte
 <script lang="ts">
-	import { cn, type WithElementRef } from "$lib/utils.js";
-	import type { HTMLAttributes } from "svelte/elements";
+	import { cn, type WithElementRef } from '$lib/utils.js';
+	import type { HTMLAttributes } from 'svelte/elements';
 
 	let {
 		ref = $bindable(null),
@@ -2212,20 +2238,20 @@ export {
 	data-slot="input-group"
 	role="group"
 	class={cn(
-		"group/input-group border-input dark:bg-input/30 relative flex w-full items-center rounded-md border shadow-xs transition-[color,box-shadow] outline-none",
-		"h-9 has-[>textarea]:h-auto",
+		'group/input-group relative flex w-full items-center rounded-md border border-input shadow-xs transition-[color,box-shadow] outline-none dark:bg-input/30',
+		'h-9 has-[>textarea]:h-auto',
 
 		// Variants based on alignment.
-		"has-[>[data-align=inline-start]]:[&>input]:ps-2",
-		"has-[>[data-align=inline-end]]:[&>input]:pe-2",
-		"has-[>[data-align=block-start]]:h-auto has-[>[data-align=block-start]]:flex-col has-[>[data-align=block-start]]:[&>input]:pb-3",
-		"has-[>[data-align=block-end]]:h-auto has-[>[data-align=block-end]]:flex-col has-[>[data-align=block-end]]:[&>input]:pt-3",
+		'has-[>[data-align=inline-start]]:[&>input]:ps-2',
+		'has-[>[data-align=inline-end]]:[&>input]:pe-2',
+		'has-[>[data-align=block-start]]:h-auto has-[>[data-align=block-start]]:flex-col has-[>[data-align=block-start]]:[&>input]:pb-3',
+		'has-[>[data-align=block-end]]:h-auto has-[>[data-align=block-end]]:flex-col has-[>[data-align=block-end]]:[&>input]:pt-3',
 
 		// Focus state.
-		"has-[[data-slot=input-group-control]:focus-visible]:border-ring has-[[data-slot=input-group-control]:focus-visible]:ring-ring/50 has-[[data-slot=input-group-control]:focus-visible]:ring-[3px]",
+		'has-[[data-slot=input-group-control]:focus-visible]:border-ring has-[[data-slot=input-group-control]:focus-visible]:ring-[3px] has-[[data-slot=input-group-control]:focus-visible]:ring-ring/50',
 
 		// Error state.
-		"has-[[data-slot][aria-invalid=true]]:ring-destructive/20 has-[[data-slot][aria-invalid=true]]:border-destructive dark:has-[[data-slot][aria-invalid=true]]:ring-destructive/40",
+		'has-[[data-slot][aria-invalid=true]]:border-destructive has-[[data-slot][aria-invalid=true]]:ring-destructive/20 dark:has-[[data-slot][aria-invalid=true]]:ring-destructive/40',
 
 		className
 	)}
@@ -2233,7 +2259,6 @@ export {
 >
 	{@render children?.()}
 </div>
-
 ```
 
 # src\lib\components\ui\input\index.ts
@@ -2253,14 +2278,14 @@ export {
 
 ```svelte
 <script lang="ts">
-	import type { HTMLInputAttributes, HTMLInputTypeAttribute } from "svelte/elements";
-	import { cn, type WithElementRef } from "$lib/utils.js";
+	import type { HTMLInputAttributes, HTMLInputTypeAttribute } from 'svelte/elements';
+	import { cn, type WithElementRef } from '$lib/utils.js';
 
-	type InputType = Exclude<HTMLInputTypeAttribute, "file">;
+	type InputType = Exclude<HTMLInputTypeAttribute, 'file'>;
 
 	type Props = WithElementRef<
-		Omit<HTMLInputAttributes, "type"> &
-			({ type: "file"; files?: FileList } | { type?: InputType; files?: undefined })
+		Omit<HTMLInputAttributes, 'type'> &
+			({ type: 'file'; files?: FileList } | { type?: InputType; files?: undefined })
 	>;
 
 	let {
@@ -2269,19 +2294,19 @@ export {
 		type,
 		files = $bindable(),
 		class: className,
-		"data-slot": dataSlot = "input",
+		'data-slot': dataSlot = 'input',
 		...restProps
 	}: Props = $props();
 </script>
 
-{#if type === "file"}
+{#if type === 'file'}
 	<input
 		bind:this={ref}
 		data-slot={dataSlot}
 		class={cn(
-			"selection:bg-primary dark:bg-input/30 selection:text-primary-foreground border-input ring-offset-background placeholder:text-muted-foreground flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 pt-1.5 text-sm font-medium shadow-xs transition-[color,box-shadow] outline-none disabled:cursor-not-allowed disabled:opacity-50",
-			"focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
-			"aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+			'flex h-9 w-full min-w-0 rounded-md border border-input bg-transparent px-3 pt-1.5 text-sm font-medium shadow-xs ring-offset-background transition-[color,box-shadow] outline-none selection:bg-primary selection:text-primary-foreground placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 dark:bg-input/30',
+			'focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50',
+			'aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40',
 			className
 		)}
 		type="file"
@@ -2294,9 +2319,9 @@ export {
 		bind:this={ref}
 		data-slot={dataSlot}
 		class={cn(
-			"border-input bg-background selection:bg-primary dark:bg-input/30 selection:text-primary-foreground ring-offset-background placeholder:text-muted-foreground flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
-			"focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
-			"aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+			'flex h-9 w-full min-w-0 rounded-md border border-input bg-background px-3 py-1 text-base shadow-xs ring-offset-background transition-[color,box-shadow] outline-none selection:bg-primary selection:text-primary-foreground placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 md:text-sm dark:bg-input/30',
+			'focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50',
+			'aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40',
 			className
 		)}
 		{type}
@@ -2304,7 +2329,6 @@ export {
 		{...restProps}
 	/>
 {/if}
-
 ```
 
 # src\lib\components\ui\label\index.ts
@@ -2324,8 +2348,8 @@ export {
 
 ```svelte
 <script lang="ts">
-	import { Label as LabelPrimitive } from "bits-ui";
-	import { cn } from "$lib/utils.js";
+	import { Label as LabelPrimitive } from 'bits-ui';
+	import { cn } from '$lib/utils.js';
 
 	let {
 		ref = $bindable(null),
@@ -2338,12 +2362,11 @@ export {
 	bind:ref
 	data-slot="label"
 	class={cn(
-		"flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
+		'flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50',
 		className
 	)}
 	{...restProps}
 />
-
 ```
 
 # src\lib\components\ui\pagination\index.ts
@@ -2387,8 +2410,8 @@ export {
 
 ```svelte
 <script lang="ts">
-	import type { HTMLAttributes } from "svelte/elements";
-	import { cn, type WithElementRef } from "$lib/utils.js";
+	import type { HTMLAttributes } from 'svelte/elements';
+	import { cn, type WithElementRef } from '$lib/utils.js';
 
 	let {
 		ref = $bindable(null),
@@ -2401,21 +2424,20 @@ export {
 <ul
 	bind:this={ref}
 	data-slot="pagination-content"
-	class={cn("flex flex-row items-center gap-1", className)}
+	class={cn('flex flex-row items-center gap-1', className)}
 	{...restProps}
 >
 	{@render children?.()}
 </ul>
-
 ```
 
 # src\lib\components\ui\pagination\pagination-ellipsis.svelte
 
 ```svelte
 <script lang="ts">
-	import EllipsisIcon from "@lucide/svelte/icons/ellipsis";
-	import { cn, type WithElementRef, type WithoutChildren } from "$lib/utils.js";
-	import type { HTMLAttributes } from "svelte/elements";
+	import EllipsisIcon from '@lucide/svelte/icons/ellipsis';
+	import { cn, type WithElementRef, type WithoutChildren } from '$lib/utils.js';
+	import type { HTMLAttributes } from 'svelte/elements';
 
 	let {
 		ref = $bindable(null),
@@ -2428,21 +2450,20 @@ export {
 	bind:this={ref}
 	aria-hidden="true"
 	data-slot="pagination-ellipsis"
-	class={cn("flex size-9 items-center justify-center", className)}
+	class={cn('flex size-9 items-center justify-center', className)}
 	{...restProps}
 >
 	<EllipsisIcon class="size-4" />
 	<span class="sr-only">More pages</span>
 </span>
-
 ```
 
 # src\lib\components\ui\pagination\pagination-item.svelte
 
 ```svelte
 <script lang="ts">
-	import type { HTMLLiAttributes } from "svelte/elements";
-	import type { WithElementRef } from "$lib/utils.js";
+	import type { HTMLLiAttributes } from 'svelte/elements';
+	import type { WithElementRef } from '$lib/utils.js';
 
 	let {
 		ref = $bindable(null),
@@ -2454,21 +2475,20 @@ export {
 <li bind:this={ref} data-slot="pagination-item" {...restProps}>
 	{@render children?.()}
 </li>
-
 ```
 
 # src\lib\components\ui\pagination\pagination-link.svelte
 
 ```svelte
 <script lang="ts">
-	import { Pagination as PaginationPrimitive } from "bits-ui";
-	import { cn } from "$lib/utils.js";
-	import { type Props, buttonVariants } from "$lib/components/ui/button/index.js";
+	import { Pagination as PaginationPrimitive } from 'bits-ui';
+	import { cn } from '$lib/utils.js';
+	import { type Props, buttonVariants } from '$lib/components/ui/button/index.js';
 
 	let {
 		ref = $bindable(null),
 		class: className,
-		size = "icon",
+		size = 'icon',
 		isActive,
 		page,
 		children,
@@ -2486,30 +2506,29 @@ export {
 <PaginationPrimitive.Page
 	bind:ref
 	{page}
-	aria-current={isActive ? "page" : undefined}
+	aria-current={isActive ? 'page' : undefined}
 	data-slot="pagination-link"
 	data-active={isActive}
 	class={cn(
 		buttonVariants({
-			variant: isActive ? "outline" : "ghost",
-			size,
+			variant: isActive ? 'outline' : 'ghost',
+			size
 		}),
 		className
 	)}
 	children={children || Fallback}
 	{...restProps}
 />
-
 ```
 
 # src\lib\components\ui\pagination\pagination-next-button.svelte
 
 ```svelte
 <script lang="ts">
-	import { Pagination as PaginationPrimitive } from "bits-ui";
-	import ChevronRightIcon from "@lucide/svelte/icons/chevron-right";
-	import { buttonVariants } from "$lib/components/ui/button/index.js";
-	import { cn } from "$lib/utils.js";
+	import { Pagination as PaginationPrimitive } from 'bits-ui';
+	import ChevronRightIcon from '@lucide/svelte/icons/chevron-right';
+	import { buttonVariants } from '$lib/components/ui/button/index.js';
+	import { cn } from '$lib/utils.js';
 
 	let {
 		ref = $bindable(null),
@@ -2529,26 +2548,25 @@ export {
 	aria-label="Go to next page"
 	class={cn(
 		buttonVariants({
-			size: "default",
-			variant: "ghost",
-			class: "gap-1 px-2.5 sm:pe-2.5",
+			size: 'default',
+			variant: 'ghost',
+			class: 'gap-1 px-2.5 sm:pe-2.5'
 		}),
 		className
 	)}
 	children={children || Fallback}
 	{...restProps}
 />
-
 ```
 
 # src\lib\components\ui\pagination\pagination-next.svelte
 
 ```svelte
 <script lang="ts">
-	import { Pagination as PaginationPrimitive } from "bits-ui";
-	import ChevronRightIcon from "@lucide/svelte/icons/chevron-right";
-	import { buttonVariants } from "$lib/components/ui/button/index.js";
-	import { cn } from "$lib/utils.js";
+	import { Pagination as PaginationPrimitive } from 'bits-ui';
+	import ChevronRightIcon from '@lucide/svelte/icons/chevron-right';
+	import { buttonVariants } from '$lib/components/ui/button/index.js';
+	import { cn } from '$lib/utils.js';
 
 	let {
 		ref = $bindable(null),
@@ -2562,9 +2580,9 @@ export {
 	aria-label="Go to next page"
 	class={cn(
 		buttonVariants({
-			size: "default",
-			variant: "ghost",
-			class: "gap-1 px-2.5 sm:pe-2.5",
+			size: 'default',
+			variant: 'ghost',
+			class: 'gap-1 px-2.5 sm:pe-2.5'
 		}),
 		className
 	)}
@@ -2573,17 +2591,16 @@ export {
 	<span class="hidden sm:block">Next</span>
 	<ChevronRightIcon /></PaginationPrimitive.NextButton
 >
-
 ```
 
 # src\lib\components\ui\pagination\pagination-prev-button.svelte
 
 ```svelte
 <script lang="ts">
-	import { Pagination as PaginationPrimitive } from "bits-ui";
-	import ChevronLeftIcon from "@lucide/svelte/icons/chevron-left";
-	import { buttonVariants } from "$lib/components/ui/button/index.js";
-	import { cn } from "$lib/utils.js";
+	import { Pagination as PaginationPrimitive } from 'bits-ui';
+	import ChevronLeftIcon from '@lucide/svelte/icons/chevron-left';
+	import { buttonVariants } from '$lib/components/ui/button/index.js';
+	import { cn } from '$lib/utils.js';
 
 	let {
 		ref = $bindable(null),
@@ -2603,26 +2620,25 @@ export {
 	aria-label="Go to previous page"
 	class={cn(
 		buttonVariants({
-			size: "default",
-			variant: "ghost",
-			class: "gap-1 px-2.5 sm:ps-2.5",
+			size: 'default',
+			variant: 'ghost',
+			class: 'gap-1 px-2.5 sm:ps-2.5'
 		}),
 		className
 	)}
 	children={children || Fallback}
 	{...restProps}
 />
-
 ```
 
 # src\lib\components\ui\pagination\pagination-previous.svelte
 
 ```svelte
 <script lang="ts">
-	import { Pagination as PaginationPrimitive } from "bits-ui";
-	import ChevronLeftIcon from "@lucide/svelte/icons/chevron-left";
-	import { buttonVariants } from "$lib/components/ui/button/index.js";
-	import { cn } from "$lib/utils.js";
+	import { Pagination as PaginationPrimitive } from 'bits-ui';
+	import ChevronLeftIcon from '@lucide/svelte/icons/chevron-left';
+	import { buttonVariants } from '$lib/components/ui/button/index.js';
+	import { cn } from '$lib/utils.js';
 
 	let {
 		ref = $bindable(null),
@@ -2636,9 +2652,9 @@ export {
 	aria-label="Go to previous page"
 	class={cn(
 		buttonVariants({
-			size: "default",
-			variant: "ghost",
-			class: "gap-1 px-2.5 sm:ps-2.5",
+			size: 'default',
+			variant: 'ghost',
+			class: 'gap-1 px-2.5 sm:ps-2.5'
 		}),
 		className
 	)}
@@ -2647,16 +2663,15 @@ export {
 	<ChevronLeftIcon />
 	<span class="hidden sm:block">Previous</span></PaginationPrimitive.PrevButton
 >
-
 ```
 
 # src\lib\components\ui\pagination\pagination.svelte
 
 ```svelte
 <script lang="ts">
-	import { Pagination as PaginationPrimitive } from "bits-ui";
+	import { Pagination as PaginationPrimitive } from 'bits-ui';
 
-	import { cn } from "$lib/utils.js";
+	import { cn } from '$lib/utils.js';
 
 	let {
 		ref = $bindable(null),
@@ -2675,13 +2690,12 @@ export {
 	role="navigation"
 	aria-label="pagination"
 	data-slot="pagination"
-	class={cn("mx-auto flex w-full justify-center", className)}
+	class={cn('mx-auto flex w-full justify-center', className)}
 	{count}
 	{perPage}
 	{siblingCount}
 	{...restProps}
 />
-
 ```
 
 # src\lib\components\ui\separator\index.ts
@@ -2701,13 +2715,13 @@ export {
 
 ```svelte
 <script lang="ts">
-	import { Separator as SeparatorPrimitive } from "bits-ui";
-	import { cn } from "$lib/utils.js";
+	import { Separator as SeparatorPrimitive } from 'bits-ui';
+	import { cn } from '$lib/utils.js';
 
 	let {
 		ref = $bindable(null),
 		class: className,
-		"data-slot": dataSlot = "separator",
+		'data-slot': dataSlot = 'separator',
 		...restProps
 	}: SeparatorPrimitive.RootProps = $props();
 </script>
@@ -2716,12 +2730,11 @@ export {
 	bind:ref
 	data-slot={dataSlot}
 	class={cn(
-		"bg-border shrink-0 data-[orientation=horizontal]:h-px data-[orientation=horizontal]:w-full data-[orientation=vertical]:min-h-full data-[orientation=vertical]:w-px",
+		'shrink-0 bg-border data-[orientation=horizontal]:h-px data-[orientation=horizontal]:w-full data-[orientation=vertical]:min-h-full data-[orientation=vertical]:w-px',
 		className
 	)}
 	{...restProps}
 />
-
 ```
 
 # src\lib\components\ui\sonner\index.ts
@@ -2735,14 +2748,14 @@ export { default as Toaster } from "./sonner.svelte";
 
 ```svelte
 <script lang="ts">
-	import CircleCheckIcon from "@lucide/svelte/icons/circle-check";
-	import InfoIcon from "@lucide/svelte/icons/info";
-	import Loader2Icon from "@lucide/svelte/icons/loader-2";
-	import OctagonXIcon from "@lucide/svelte/icons/octagon-x";
-	import TriangleAlertIcon from "@lucide/svelte/icons/triangle-alert";
+	import CircleCheckIcon from '@lucide/svelte/icons/circle-check';
+	import InfoIcon from '@lucide/svelte/icons/info';
+	import Loader2Icon from '@lucide/svelte/icons/loader-2';
+	import OctagonXIcon from '@lucide/svelte/icons/octagon-x';
+	import TriangleAlertIcon from '@lucide/svelte/icons/triangle-alert';
 
-	import { Toaster as Sonner, type ToasterProps as SonnerProps } from "svelte-sonner";
-	import { mode } from "mode-watcher";
+	import { Toaster as Sonner, type ToasterProps as SonnerProps } from 'svelte-sonner';
+	import { mode } from 'mode-watcher';
 
 	let { ...restProps }: SonnerProps = $props();
 </script>
@@ -2768,7 +2781,6 @@ export { default as Toaster } from "./sonner.svelte";
 		<TriangleAlertIcon class="size-4" />
 	{/snippet}
 </Sonner>
-
 ```
 
 # src\lib\components\ui\textarea\index.ts
@@ -2788,14 +2800,14 @@ export {
 
 ```svelte
 <script lang="ts">
-	import { cn, type WithElementRef, type WithoutChildren } from "$lib/utils.js";
-	import type { HTMLTextareaAttributes } from "svelte/elements";
+	import { cn, type WithElementRef, type WithoutChildren } from '$lib/utils.js';
+	import type { HTMLTextareaAttributes } from 'svelte/elements';
 
 	let {
 		ref = $bindable(null),
 		value = $bindable(),
 		class: className,
-		"data-slot": dataSlot = "textarea",
+		'data-slot': dataSlot = 'textarea',
 		...restProps
 	}: WithoutChildren<WithElementRef<HTMLTextareaAttributes>> = $props();
 </script>
@@ -2804,24 +2816,35 @@ export {
 	bind:this={ref}
 	data-slot={dataSlot}
 	class={cn(
-		"border-input placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 flex field-sizing-content min-h-16 w-full rounded-md border bg-transparent px-3 py-2 text-base shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+		'flex field-sizing-content min-h-16 w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-xs transition-[color,box-shadow] outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:aria-invalid:ring-destructive/40',
 		className
 	)}
 	bind:value
 	{...restProps}
 ></textarea>
-
 ```
 
-# src\lib\constants.ts
+# src\lib\constants\index.ts
 
 ```ts
-import { NODE_ENV } from '$env/static/private';
+// src/lib/constants/index.ts
+import { dev } from '$app/environment';
 import { PUBLIC_API_URL } from '$env/static/public';
 
-export const DEFAULT_TIMEOUT = 1000 * 10;
-
-export const BASE_URL = NODE_ENV === 'development' ? '' : PUBLIC_API_URL;
+export const CONSTANTS = {
+	COMMENT: {
+		MAX_LENGTH: 500,
+		MIN_LENGTH: 1
+	},
+	API: {
+		TIMEOUT: 10 * 1000,
+		BASE_URL: dev ? '' : PUBLIC_API_URL
+	},
+	PAGINATION: {
+		DEFAULT_PAGE: 1,
+		DEFAULT_LIMIT: 10
+	}
+} as const;
 
 ```
 
@@ -2863,20 +2886,23 @@ export type RegisterInput = z.infer<typeof registerSchema>;
 
 ```ts
 import * as z from 'zod';
+import { CONSTANTS } from '$lib/constants';
+
+const { MAX_LENGTH, MIN_LENGTH } = CONSTANTS.COMMENT;
 
 export const createCommentSchema = z.object({
 	content: z
 		.string()
-		.min(1, 'Content is required')
-		.max(500, 'Comment must be 500 characters or less')
+		.min(MIN_LENGTH, 'Content is required')
+		.max(MAX_LENGTH, `Comment must be ${MAX_LENGTH} characters or less`)
 		.trim()
 });
 
 export const updateCommentSchema = z.object({
 	content: z
 		.string()
-		.min(1, 'Content is required')
-		.max(500, 'Comment must be 500 characters or less')
+		.min(MIN_LENGTH, 'Content is required')
+		.max(MAX_LENGTH, `Comment must be ${MAX_LENGTH} characters or less`)
 		.trim()
 });
 
@@ -2984,13 +3010,62 @@ export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs));
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+/**
+ * Type utilities for Svelte component props
+ */
+
 export type WithoutChild<T> = T extends { child?: any } ? Omit<T, 'child'> : T;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 export type WithoutChildren<T> = T extends { children?: any } ? Omit<T, 'children'> : T;
+
 export type WithoutChildrenOrChild<T> = WithoutChildren<WithoutChild<T>>;
+
 export type WithElementRef<T, U extends HTMLElement = HTMLElement> = T & { ref?: U | null };
 
+```
+
+# src\lib\utils\error-handler.ts
+
+```ts
+import { error, fail } from '@sveltejs/kit';
+import { APIError } from '$lib/api/client';
+
+/**
+ * For load functions - throws error (shows error page)
+ */
+export function handleLoadError(err: unknown): never {
+	if (err instanceof APIError) {
+		error(err.status ?? 500, err.message);
+	}
+
+	throw err;
+}
+
+/**
+ * For form actions - returns fail (stays on page)
+ * Handles ALL API errors including rate limits, validation, etc.
+ */
+export function handleActionError(err: unknown) {
+	if (err instanceof APIError) {
+		return fail(err.status ?? 500, {
+			message: err.message,
+			errors: err.fieldErrors
+		});
+	}
+
+	throw err;
+}
+
+```
+
+# src\lib\utils\format.ts
+
+```ts
+/**
+ * Format numbers in compact notation (1000 → 1K)
+ */
 export function formatCompactNum(num: number) {
 	return new Intl.NumberFormat('en', {
 		notation: 'compact',
@@ -3021,11 +3096,14 @@ export async function load({ locals }) {
 	import { Toaster } from '$lib/components/ui/sonner/index.js';
 
 	import Header from './Header.svelte';
+	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
 
 	let { children, data } = $props();
 </script>
 
 <ModeWatcher />
+
+<LoadingSpinner />
 
 <div class="flex min-h-screen flex-col items-center">
 	<Header user={data.user} />
@@ -3036,21 +3114,16 @@ export async function load({ locals }) {
 
 	<Toaster position="bottom-right" />
 </div>
-
 ```
 
 # src\routes\+page.server.ts
 
 ```ts
-import { error } from '@sveltejs/kit';
-import type { PageServerLoad } from './$types';
-
 import { getPosts } from '$lib/api/post';
-import { APIError } from '$lib/api/client';
+import type { PageServerLoad } from './$types';
+import { handleLoadError } from '$lib/utils/error-handler';
 
 export const load: PageServerLoad = async ({ url, fetch }) => {
-	console.log('🔵 Server load function called');
-
 	const page = url.searchParams.get('page') ? Number(url.searchParams.get('page')) : undefined;
 	const limit = url.searchParams.get('limit') ? Number(url.searchParams.get('limit')) : undefined;
 
@@ -3059,12 +3132,7 @@ export const load: PageServerLoad = async ({ url, fetch }) => {
 			postsResult: await getPosts({ page, limit }, fetch)
 		};
 	} catch (err) {
-		if (err instanceof APIError) {
-			console.error(err);
-			error(err.status!, err.message);
-		}
-
-		throw err;
+		handleLoadError(err);
 	}
 };
 
@@ -3105,7 +3173,6 @@ export const load: PageServerLoad = async ({ url, fetch }) => {
 		<Pagination {pagination} />
 	</div>
 </div>
-
 ```
 
 # src\routes\about\+page.svelte
@@ -3136,7 +3203,6 @@ export const load: PageServerLoad = async ({ url, fetch }) => {
 		the devtools network panel and reloading.
 	</p>
 </div>
-
 ```
 
 # src\routes\about\+page.ts
@@ -3219,6 +3285,7 @@ export const actions = {
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { goto } from '$app/navigation';
 	import { toast } from 'svelte-sonner';
+	import AuthFormField from '$lib/components/AuthFormField.svelte';
 
 	let { form } = $props();
 	let submitting = $state(false);
@@ -3230,17 +3297,26 @@ export const actions = {
 
 	// Local error state for real-time clearing
 	let localErrors = $state<Record<string, string[] | undefined>>({});
+	let localFormError = $state<string | undefined>();
 
 	// Sync form errors with local errors
 	$effect(() => {
 		if (form?.errors) {
 			localErrors = { ...form.errors };
 		}
+
+		if (form?.message) {
+			localFormError = form.message;
+		}
 	});
 
 	// Clear error for a specific field
 	function clearError(fieldName: string) {
-		localErrors[fieldName] = undefined;
+		// Only clear if there's actually an error
+		if (localErrors[fieldName] || localFormError) {
+			localErrors[fieldName] = undefined;
+			localFormError = undefined;
+		}
 	}
 
 	const handleSubmit: SubmitFunction = () => {
@@ -3287,7 +3363,7 @@ export const actions = {
 
 		<Field.Set>
 			<Field.Group class="gap-5">
-				<Field.Field class="gap-2">
+				<!-- <Field.Field class="gap-2">
 					<Field.FieldLabel for="username">Username</Field.FieldLabel>
 
 					<Input
@@ -3303,32 +3379,32 @@ export const actions = {
 					{#if localErrors?.username}
 						<Field.FieldError id="username-error">{localErrors.username[0]}</Field.FieldError>
 					{/if}
-				</Field.Field>
+				</Field.Field> -->
+				<AuthFormField
+					name="username"
+					label="username"
+					value={form?.data?.username ?? ''}
+					errors={localErrors?.username}
+					onClearError={() => clearError('username')}
+					autofocus
+				/>
 
-				<Field.Field class="gap-2">
-					<Field.FieldLabel for="password">Password</Field.FieldLabel>
-
-					<Input
-						type="password"
-						name="password"
-						id="password"
-						value={form?.data?.password ?? ''}
-						class="rounded-sm"
-						oninput={() => clearError('password')}
-					/>
-
-					{#if localErrors?.password}
-						<Field.FieldError id="password-error">{localErrors.password[0]}</Field.FieldError>
-					{/if}
-				</Field.Field>
+				<AuthFormField
+					name="password"
+					label="password"
+					type="password"
+					value={form?.data?.password ?? ''}
+					errors={localErrors?.password}
+					onClearError={() => clearError('password')}
+				/>
 
 				<Field.Field class="gap-2">
 					<Button type="submit" class="cursor-pointer" disabled={submitting}>
 						{submitting ? 'Logging in...' : 'Login'}
 					</Button>
 
-					{#if form?.message}
-						<Field.FieldError id="form-message">{form.message}</Field.FieldError>
+					{#if localFormError}
+						<Field.FieldError id="form-message">{localFormError}</Field.FieldError>
 					{/if}
 				</Field.Field>
 			</Field.Group>
@@ -3350,7 +3426,6 @@ export const actions = {
 		</p>
 	</form>
 </div>
-
 ```
 
 # src\routes\auth\logout\+page.server.ts
@@ -3384,7 +3459,7 @@ import { APIError } from '$lib/api/client';
 import { registerSchema } from '$lib/schema/auth';
 
 export const actions = {
-	default: async ({ request, url }) => {
+	default: async ({ request, url, fetch }) => {
 		const formData = await request.formData();
 		const data = Object.fromEntries(formData);
 
@@ -3398,10 +3473,7 @@ export const actions = {
 		}
 
 		try {
-			// const registerResult = await register(validateResult.data);
-			// const token = btoa(JSON.stringify(registerResult.user));
-			// cookies.set('jwt', token, { path: '/' });
-			await register(validateResult.data);
+			await register(validateResult.data, fetch);
 
 			const to = url.searchParams.has('redirect') ? `${url.searchParams.get('redirect')}` : '/';
 
@@ -3434,11 +3506,13 @@ export const actions = {
 	import * as Field from '$lib/components/ui/field/index.js';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
+	import AuthFormField from '$lib/components/AuthFormField.svelte';
 
 	let { form }: PageProps = $props();
 
 	let submitting = $state(false);
 	let localErrors = $state<Record<string, string[] | undefined>>({});
+	let localFormError = $state<string | undefined>();
 	let loginUrl = $derived.by(() => {
 		const redirect = page.url.searchParams.get('redirect');
 		return redirect ? `/auth/login?redirect=${encodeURIComponent(redirect)}` : '/auth/login';
@@ -3448,10 +3522,17 @@ export const actions = {
 		if (form?.errors) {
 			localErrors = { ...form.errors };
 		}
+
+		if (form?.message) {
+			localFormError = form.message;
+		}
 	});
 
 	const clearError = (filedName: string) => {
-		localErrors[filedName] = undefined;
+		if (localErrors[filedName] || localFormError) {
+			localErrors[filedName] = undefined;
+			localFormError = undefined;
+		}
 	};
 
 	const handleSubmit: SubmitFunction = () => {
@@ -3492,82 +3573,49 @@ export const actions = {
 
 		<Field.Set>
 			<Field.Group class="gap-5">
-				<Field.Field class="gap-2">
-					<Field.FieldLabel for="username" class="capitalize">username</Field.FieldLabel>
-					<Input
-						type="text"
-						id="username"
-						name="username"
-						value={form?.data?.username ?? ''}
-						oninput={() => clearError('username')}
-						autofocus
-						class="rounded-sm"
-					/>
+				<AuthFormField
+					name="username"
+					label="username"
+					value={form?.data?.username ?? ''}
+					errors={localErrors?.username}
+					onClearError={() => clearError('username')}
+					autofocus
+				/>
 
-					{#if localErrors.username}
-						<Field.FieldError id="username-error">{localErrors.username[0]}</Field.FieldError>
-					{/if}
-				</Field.Field>
+				<AuthFormField
+					name="email"
+					label="email"
+					type="email"
+					value={form?.data?.email ?? ''}
+					errors={localErrors?.email}
+					onClearError={() => clearError('email')}
+				/>
 
-				<Field.Field class="gap-2">
-					<Field.FieldLabel for="email" class="capitalize">email</Field.FieldLabel>
-					<Input
-						type="email"
-						id="email"
-						name="email"
-						value={form?.data?.email ?? ''}
-						oninput={() => clearError('email')}
-						class="rounded-sm"
-					/>
+				<AuthFormField
+					name="password"
+					label="password"
+					type="password"
+					value={form?.data?.password ?? ''}
+					errors={localErrors?.password}
+					onClearError={() => clearError('password')}
+				/>
 
-					{#if localErrors.email}
-						<Field.FieldError id="email-error">{localErrors.email[0]}</Field.FieldError>
-					{/if}
-				</Field.Field>
-
-				<Field.Field class="gap-2">
-					<Field.FieldLabel for="password" class="capitalize">password</Field.FieldLabel>
-					<Input
-						type="password"
-						id="password"
-						name="password"
-						value={form?.data?.password ?? ''}
-						oninput={() => clearError('password')}
-						class="rounded-sm"
-					/>
-
-					{#if localErrors.password}
-						<Field.FieldError id="password-error">{localErrors.password[0]}</Field.FieldError>
-					{/if}
-				</Field.Field>
-
-				<Field.Field class="gap-2">
-					<Field.FieldLabel for="confirmPassword" class="capitalize">
-						Confirm Password
-					</Field.FieldLabel>
-					<Input
-						type="password"
-						id="confirmPassword"
-						name="confirmPassword"
-						value={form?.data?.confirmPassword ?? ''}
-						oninput={() => clearError('confirmPassword')}
-						class="rounded-sm"
-					/>
-
-					{#if localErrors.confirmPassword}
-						<Field.FieldError id="confirmPassword-error">
-							{localErrors.confirmPassword[0]}
-						</Field.FieldError>
-					{/if}
-				</Field.Field>
+				<AuthFormField
+					name="confirmPassword"
+					label="confirmPassword"
+					type="password"
+					value={form?.data?.confirmPassword ?? ''}
+					errors={localErrors?.confirmPassword}
+					onClearError={() => clearError('confirmPassword')}
+				/>
 
 				<Field.Field class="gap-2">
 					<Button type="submit" class="cursor-pointer" disabled={submitting}>
 						{submitting ? 'Registering...' : 'Register'}
 					</Button>
 
-					{#if form?.message}
-						<Field.FieldError id="form-message">{form.message}</Field.FieldError>
+					{#if localFormError}
+						<Field.FieldError id="form-message">{localFormError}</Field.FieldError>
 					{/if}
 				</Field.Field>
 			</Field.Group>
@@ -3589,7 +3637,6 @@ export const actions = {
 		</p>
 	</form>
 </div>
-
 ```
 
 # src\routes\Header.svelte
@@ -3631,9 +3678,9 @@ export const actions = {
 </script>
 
 <header
-	class="sticky top-0 z-20 w-full border-b border-zinc-100 bg-background/50 backdrop-blur dark:border-zinc-900"
+	class="sticky top-0 z-20 h-16 w-full border-b border-zinc-100 bg-background/50 backdrop-blur dark:border-zinc-900"
 >
-	<div class="mx-auto flex h-16 w-full max-w-2xl items-center justify-between px-4">
+	<div class="mx-auto flex h-full w-full max-w-2xl items-center justify-between px-4">
 		<!-- brand -->
 		<Button variant="link" class="p-0 hover:no-underline">
 			<a href="/" aria-label="The blog homepage">
@@ -3741,7 +3788,6 @@ export const actions = {
 		</div>
 	</div>
 </header>
-
 ```
 
 # src\routes\layout.css
@@ -3888,27 +3934,30 @@ export const actions = {
 			sans-serif;
 	}
 }
-
 ```
 
 # src\routes\posts\[id]\+page.server.ts
 
 ```ts
-import { error, fail } from '@sveltejs/kit';
-import { commentPost, getPost, likePost } from '$lib/api/post.js';
-import type { Actions } from './$types';
-import { APIError } from '$lib/api/client.js';
-import { createCommentSchema } from '$lib/schema/comment.js';
 import { flattenError } from 'zod';
+import type { Actions } from './$types';
+import { error, fail } from '@sveltejs/kit';
+import { createCommentSchema } from '$lib/schema/comment.js';
+import { commentPost, getPost, likePost } from '$lib/api/post.js';
+import { handleLoadError, handleActionError } from '$lib/utils/error-handler.js';
 
 export async function load({ params, fetch }) {
-	const id = Number(params.id);
+	const id = parseInt(params.id);
 
-	if (!Number.isInteger(id) || id < 1) {
+	if (isNaN(id) || id < 1) {
 		error(400, 'Invalid post ID');
 	}
 
-	return await getPost(id, fetch);
+	try {
+		return await getPost(id, fetch);
+	} catch (err) {
+		handleLoadError(err);
+	}
 }
 
 export const actions = {
@@ -3922,17 +3971,7 @@ export const actions = {
 		try {
 			await likePost(id, fetch);
 		} catch (err) {
-			if (err instanceof APIError) {
-				if (err.status === 429) {
-					return fail(err.status, {
-						message: err.message
-					});
-				} else {
-					error(err.status!, err.message);
-				}
-			}
-
-			throw err;
+			return handleActionError(err);
 		}
 	},
 	comment: async ({ params, request, fetch }) => {
@@ -3959,15 +3998,8 @@ export const actions = {
 			await commentPost(id, validateResult.data.content, fetch);
 
 			return { success: true };
-		} catch (error) {
-			if (error instanceof APIError) {
-				return fail(error.status!, {
-					message: error.message,
-					errors: error.fieldErrors
-				});
-			}
-
-			throw error;
+		} catch (err) {
+			return handleActionError(err);
 		}
 	}
 } satisfies Actions;
@@ -4008,7 +4040,6 @@ export const actions = {
 
 	<CommentSection bind:this={commentSection} post={data.post} user={data.user} />
 </div>
-
 ```
 
 # src\routes\posts\[id]\Article.svelte
@@ -4053,7 +4084,6 @@ export const actions = {
 		{/each}
 	</div>
 </section>
-
 ```
 
 # src\routes\posts\[id]\ArticleControls.svelte
@@ -4061,7 +4091,7 @@ export const actions = {
 ```svelte
 <script lang="ts">
 	import { Heart, MessageCircle } from '@lucide/svelte';
-	import { formatCompactNum } from '@/utils';
+	import { formatCompactNum } from '$lib/utils/format';
 	import type { AuthResultUser, PostDetail } from '$lib/types/data';
 	import { enhance } from '$app/forms';
 	import { scale } from 'svelte/transition';
@@ -4081,8 +4111,8 @@ export const actions = {
 	let { user, post, handleCommentClick }: Props = $props();
 
 	let isAuthenticated = $derived(!!user);
-	let pendingRequests = $state(0);
 
+	let pendingRequests = $state(0);
 	let optimisticLiked = $derived(post.isLikedByCurrentUser);
 	let optimisticLikes = $derived(post._count?.likes ?? 0);
 
@@ -4112,13 +4142,8 @@ export const actions = {
 			const originalCount = optimisticLikes;
 
 			// optimistic update
-			if (optimisticLiked) {
-				optimisticLikes -= 1;
-			} else {
-				optimisticLikes += 1;
-			}
-
 			optimisticLiked = !optimisticLiked;
+			optimisticLikes += optimisticLiked ? 1 : -1;
 
 			return async ({ result, update }) => {
 				pendingRequests -= 1;
@@ -4165,7 +4190,6 @@ export const actions = {
 		<span class="text-sm">{formatCompactNum(post.comments.length)}</span>
 	</button>
 </div>
-
 ```
 
 # src\routes\posts\[id]\CommentSection.svelte
@@ -4173,14 +4197,18 @@ export const actions = {
 ```svelte
 <script lang="ts">
 	import { format } from 'date-fns';
+	import { slide } from 'svelte/transition';
 	import type { AuthResultUser, PostDetail } from '$lib/types/data';
-	import { cn, formatCompactNum } from '$lib/utils';
+	import { formatCompactNum } from '$lib/utils/format';
+	import { cn } from '$lib/utils';
 	import Avatar from '@/components/Avatar.svelte';
 	import * as InputGroup from '$lib/components/ui/input-group/index.js';
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
+	import { CONSTANTS } from '$lib/constants';
+	import { LoaderCircle } from '@lucide/svelte';
 
-	const MAX_COMMENT = 500;
+	const { MAX_LENGTH } = CONSTANTS.COMMENT;
 
 	interface Props {
 		user: AuthResultUser | null;
@@ -4191,7 +4219,7 @@ export const actions = {
 
 	let isAuthenticated = $derived(!!user);
 	let content = $state('');
-	const contentRemaining = $derived.by(() => Math.max(0, MAX_COMMENT - content.length));
+	const contentRemaining = $derived.by(() => Math.max(0, MAX_LENGTH - content.length));
 
 	let textarea = $state<HTMLTextAreaElement | null>(null);
 	let submitting = $state(false);
@@ -4221,11 +4249,17 @@ export const actions = {
 
 			if (!isAuthenticated) {
 				goto(`/auth/login?redirect=${encodeURIComponent(`/posts/${post.id}#content`)}`);
-
 				cancel();
 			} else {
-				return async ({ update }) => {
+				return async ({ update, result }) => {
 					submitting = false;
+
+					if (result.type === 'success') {
+						// since you bind:value={content}, the variable is yours,
+						// so you must take care of your variable reset
+						content = '';
+						textarea?.blur();
+					}
 
 					await update();
 				};
@@ -4244,7 +4278,7 @@ export const actions = {
 				id="content"
 				name="content"
 				placeholder="What are your thoughts?'"
-				maxlength={MAX_COMMENT}
+				maxlength={MAX_LENGTH}
 				minlength={1}
 				class="min-h-20"
 				bind:ref={textarea}
@@ -4267,6 +4301,9 @@ export const actions = {
 					type="submit"
 					disabled={!content.trim() || submitting}
 				>
+					{#if submitting}
+						<LoaderCircle class="animate-spin" />
+					{/if}
 					Submit
 				</InputGroup.Button>
 			</InputGroup.Addon>
@@ -4277,7 +4314,10 @@ export const actions = {
 	{#if post.comments.length > 0}
 		<ul>
 			{#each post.comments as comment (comment.id)}
-				<li class="flex flex-col gap-5 border-b border-zinc-100 py-10 dark:border-zinc-900">
+				<li
+					class="flex flex-col gap-5 border-b border-zinc-100 py-10 dark:border-zinc-900"
+					transition:slide
+				>
 					<div class="flex items-center gap-2">
 						<Avatar username={comment.author?.username} className="size-9" />
 
@@ -4299,7 +4339,6 @@ export const actions = {
 		</ul>
 	{/if}
 </div>
-
 ```
 
 # static\favicon.ico
@@ -4339,7 +4378,6 @@ const config = {
 };
 
 export default config;
-
 ```
 
 # tsconfig.json
@@ -4365,7 +4403,6 @@ export default config;
 	// To make changes to top-level options such as include and exclude, we recommend extending
 	// the generated config; see https://svelte.dev/docs/kit/configuration#typescript
 }
-
 ```
 
 # vite.config.ts
@@ -4390,4 +4427,3 @@ export default defineConfig({
 });
 
 ```
-

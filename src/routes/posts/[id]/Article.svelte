@@ -17,7 +17,7 @@
 
 	<!-- author -->
 	<div class="my-12 flex items-baseline gap-3">
-		<a href={`/author/${post.author.id}`} class="underline-offset-2 hover:underline">
+		<a href={`/users/${post.author.id}`} class="underline-offset-2 hover:underline">
 			<span class="text-base font-medium">
 				{post.author.username}
 			</span>
